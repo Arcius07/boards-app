@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  workspaceMemberships WorkspaceMember[]
+  assignedCards        Card[]            @relation("CardAssignee")
+  comments             Comment[]
+  activityLogs         ActivityLog[]
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  members WorkspaceMember[]
+  boards  Board[]
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        String   @default("member") // "admin" | "member"
+  joinedAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([workspaceId, userId])
+}
+
+model Board {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  createdAt   DateTime @default(now())
+
+  workspace    Workspace     @relation(fields: [workspaceId], references: [id])
+  lists        List[]
+  labels       Label[]
+  activityLogs ActivityLog[]
+}
+
+model List {
+  id       String @id @default(uuid())
+  boardId  String
+  name     String
+  position Float
+
+  board Board  @relation(fields: [boardId], references: [id])
+  cards Card[]
+}
+
+model Card {
+  id          String    @id @default(uuid())
+  listId      String
+  title       String
+  description String?
+  assigneeId  String?
+  dueDate     DateTime?
+  position    Float
+  createdAt   DateTime  @default(now())
+
+  list     List        @relation(fields: [listId], references: [id])
+  assignee User?       @relation("CardAssignee", fields: [assigneeId], references: [id])
+  labels   CardLabel[]
+  comments Comment[]
+}
+
+model Label {
+  id      String @id @default(uuid())
+  boardId String
+  name    String
+  color   String
+
+  board Board       @relation(fields: [boardId], references: [id])
+  cards CardLabel[]
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+
+  card  Card  @relation(fields: [cardId], references: [id])
+  label Label @relation(fields: [labelId], references: [id])
+
+  @@id([cardId, labelId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  cardId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  card Card @relation(fields: [cardId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  boardId    String
+  userId     String
+  actionText String
+  createdAt  DateTime @default(now())
+
+  board Board @relation(fields: [boardId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+}
