@@ -1,0 +1,210 @@
+@reference "tailwindcss";
+
+.signup-page {
+  @apply min-h-screen text-white flex items-center justify-center gap-16 px-10 py-12 relative overflow-hidden;
+  background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(99,102,241,0.15), transparent),
+              radial-gradient(ellipse 60% 50% at 90% 80%, rgba(59,130,246,0.12), transparent),
+              #05070f;
+}
+
+/* ---------- Left marketing panel ---------- */
+.signup-left {
+  @apply hidden lg:flex flex-col max-w-md relative z-10;
+}
+
+.signup-logo {
+  @apply flex items-center gap-2 text-lg font-bold mb-8;
+}
+
+.signup-logo-icon {
+  @apply w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center;
+}
+
+.signup-live-row {
+  @apply flex items-center gap-3 mb-6;
+}
+
+.signup-live-badge {
+  @apply flex items-center gap-1.5 text-xs font-semibold text-green-400 bg-green-400/10 px-2.5 py-1 rounded-full;
+}
+
+.signup-live-dot {
+  @apply w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse;
+}
+
+.signup-avatar-stack {
+  @apply flex items-center -space-x-2;
+}
+
+.signup-avatar-img {
+  @apply w-7 h-7 rounded-full border-2 border-[#05070f] object-cover bg-indigo-500/30;
+}
+
+.signup-avatar-more {
+  @apply w-7 h-7 rounded-full border-2 border-[#05070f] bg-white/10 flex items-center justify-center text-[10px] font-bold;
+}
+
+.signup-online-text {
+  @apply text-xs text-gray-500 ml-1;
+}
+
+.signup-headline {
+  @apply text-4xl font-extrabold leading-tight mb-4 tracking-tight;
+}
+
+.signup-headline-accent {
+  @apply bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent;
+}
+
+.signup-subtext {
+  @apply text-gray-400 mb-10;
+}
+
+.signup-feature-list {
+  @apply flex flex-col gap-5;
+}
+
+.signup-feature-row {
+  @apply flex items-start gap-3;
+}
+
+.signup-feature-icon {
+  @apply w-9 h-9 shrink-0 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center;
+}
+
+.signup-feature-title {
+  @apply font-semibold text-sm;
+}
+
+.signup-feature-desc {
+  @apply text-gray-500 text-sm;
+}
+
+/* ---------- Floating card illustration ---------- */
+.signup-illustration {
+  @apply relative h-64 mt-10;
+}
+
+.signup-illo-card {
+  @apply absolute bg-white/[0.06] border border-white/10 rounded-xl px-4 py-3 text-xs font-medium
+    flex items-center gap-2 backdrop-blur-sm shadow-xl;
+}
+
+.signup-illo-dot {
+  @apply w-2 h-2 rounded-full shrink-0;
+}
+
+.signup-illo-dot-pulse {
+  @apply bg-pink-400 animate-pulse;
+}
+
+.signup-illo-card-1 {
+  @apply top-0 left-0 w-40 rotate-[-4deg];
+}
+
+.signup-illo-card-2 {
+  @apply top-14 left-36 w-44 rotate-[3deg] bg-white/[0.08];
+}
+
+.signup-illo-card-3 {
+  @apply top-32 left-4 w-40 rotate-[-2deg] text-green-300;
+}
+
+.signup-illo-card-sync {
+  @apply top-48 left-40 w-36 rotate-[5deg] bg-gradient-to-br from-pink-500/20 to-purple-500/20 border-pink-400/30;
+}
+
+/* ---------- Right form card ---------- */
+.signup-card {
+  @apply w-full max-w-md bg-white/[0.04] border border-white/10 rounded-2xl p-8 backdrop-blur-xl relative z-10 shadow-2xl;
+}
+
+.signup-card-title {
+  @apply text-2xl font-bold mb-1;
+}
+
+.signup-card-subtitle {
+  @apply text-gray-400 text-sm mb-6;
+}
+
+.signup-form {
+  @apply flex flex-col gap-4;
+}
+
+.signup-label {
+  @apply text-xs font-semibold text-gray-300 mb-1.5 block;
+}
+
+.signup-input-wrap {
+  @apply relative flex items-center;
+}
+
+.signup-input-icon {
+  @apply absolute left-3 text-gray-500 pointer-events-none;
+}
+
+.signup-input {
+  @apply w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white
+    placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition;
+}
+
+.signup-input-toggle {
+  @apply absolute right-3 text-gray-500 hover:text-gray-300 cursor-pointer bg-transparent border-none p-0;
+}
+
+.signup-strength-row {
+  @apply flex items-center gap-2 mt-2;
+}
+
+.signup-strength-bar {
+  @apply flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden flex gap-0.5;
+}
+
+.signup-strength-seg {
+  @apply flex-1 rounded-full transition-colors duration-200;
+}
+
+.signup-strength-label {
+  @apply text-[11px] font-medium;
+}
+
+.signup-error {
+  @apply text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2;
+}
+
+.signup-submit {
+  @apply w-full bg-indigo-600 hover:bg-indigo-500 transition rounded-lg py-2.5 font-semibold text-sm
+    disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2;
+}
+
+.signup-divider {
+  @apply flex items-center gap-3 text-xs text-gray-500 my-5;
+}
+
+.signup-divider-line {
+  @apply flex-1 h-px bg-white/10;
+}
+
+.signup-oauth-row {
+  @apply grid grid-cols-2 gap-3;
+}
+
+.signup-oauth-btn {
+  @apply flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition;
+}
+
+.signup-oauth-google {
+  @apply bg-white text-gray-800 hover:bg-gray-100;
+}
+
+.signup-oauth-github {
+  @apply bg-[#0d1117] border border-white/10 text-white hover:bg-[#161b22];
+}
+
+.signup-footer {
+  @apply text-center text-sm text-gray-400 mt-6;
+}
+
+.signup-footer-link {
+  @apply text-indigo-400 hover:text-indigo-300 font-medium;
+}
