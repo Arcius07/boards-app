@@ -174,7 +174,7 @@
 
 .signup-submit {
   @apply w-full bg-indigo-600 hover:bg-indigo-500 transition rounded-lg py-2.5 font-semibold text-sm
-    disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2;
+    disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2 cursor-pointer;
 }
 
 .signup-divider {
@@ -194,11 +194,11 @@
 }
 
 .signup-oauth-google {
-  @apply bg-white text-gray-800 hover:bg-gray-100;
+  @apply bg-white text-gray-800 hover:bg-gray-100 cursor-pointer;
 }
 
 .signup-oauth-github {
-  @apply bg-[#0d1117] border border-white/10 text-white hover:bg-[#161b22];
+  @apply bg-[#0d1117] border border-white/10 text-white hover:bg-[#161b22] cursor-pointer;
 }
 
 .signup-footer {

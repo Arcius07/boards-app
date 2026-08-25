@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Zap, Grid3x3, Users, User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+
 import api from "../api/client";
+import useAuthStore from "../store/authStore";
+
+
 import "../style/Signup.css";
 
 const avatarUrl = (name, bg) =>
@@ -9,6 +13,7 @@ const avatarUrl = (name, bg) =>
 
 function Signup() {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
@@ -36,7 +41,7 @@ function Signup() {
 
     try {
       const res = await api.post("/auth/signup", form);
-      localStorage.setItem("accessToken", res.data.accessToken);
+      setAuth(res.data.user, res.data.accessToken);
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong");
