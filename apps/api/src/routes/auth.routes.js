@@ -38,6 +38,21 @@ function generateTokens(userId) {
 
 module.exports = (prisma) => {
 
+  const jwtVerifyMiddleware = require("../middleware/auth");
+
+  router.get("/me", jwtVerifyMiddleware, async (req, res) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { id: true, name: true, email: true },
+      });
+      if (!user) return res.status(404).json({ error: "User not found" });
+      res.json({ user });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
   router.post("/signup", authLimiter, async (req, res) => {
     const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {

@@ -8,7 +8,33 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 
+import { useEffect, useState } from "react";
+import api from "./api/client";
+import useAuthStore from "./store/authStore";
+
+
 function App() {
+
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    if (accessToken) {
+      api
+        .get("/auth/me")
+        .then((res) => setAuth(res.data.user, accessToken))
+        .catch(() => useAuthStore.getState().clearAuth())
+        .finally(() => setCheckingAuth(false));
+    } else {
+      setCheckingAuth(false);
+    }
+  }, []);
+
+  if (checkingAuth) {
+    return <div className="text-white p-8">Loading...</div>;
+  }
+
   return (
     <BrowserRouter>
       <nav className="p-4 bg-gray-100 flex gap-4 text-sm">
