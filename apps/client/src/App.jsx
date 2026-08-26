@@ -12,6 +12,8 @@ import { useEffect, useState } from "react";
 import api from "./api/client";
 import useAuthStore from "./store/authStore";
 
+import RequireAuth from "./components/RequireAuth";
+
 
 function App() {
 
@@ -52,11 +54,11 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/board/:boardId" element={<BoardView />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+        <Route path="/board/:boardId" element={<RequireAuth><BoardView /></RequireAuth>} />
+        <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
+        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
   );

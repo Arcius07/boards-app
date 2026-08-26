@@ -27,5 +27,8 @@ app.get("/test-db", async (req, res) => {
 const authRoutes = require("./routes/auth.routes");
 app.use("/auth", authRoutes(prisma));
 
+const workspaceRoutes = require("./routes/workspace.routes");
+app.use("/workspaces", workspaceRoutes(prisma));
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
