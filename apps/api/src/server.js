@@ -36,6 +36,8 @@ app.use("/boards", boardRoutes(prisma));
 const listRoutes = require("./routes/list.routes");
 app.use("/lists", listRoutes(prisma));
 
+const cardRoutes = require("./routes/card.routes");
+app.use("/cards", cardRoutes(prisma));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
