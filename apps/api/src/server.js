@@ -30,5 +30,12 @@ app.use("/auth", authRoutes(prisma));
 const workspaceRoutes = require("./routes/workspace.routes");
 app.use("/workspaces", workspaceRoutes(prisma));
 
+const boardRoutes = require("./routes/board.routes");
+app.use("/boards", boardRoutes(prisma));
+
+const listRoutes = require("./routes/list.routes");
+app.use("/lists", listRoutes(prisma));
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
