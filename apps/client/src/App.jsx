@@ -44,7 +44,6 @@ function App() {
         <Link to="/signup">Signup</Link>
         <Link to="/login">Login</Link>
         <Link to="/dashboard">Dashboard</Link>
-        <Link to="/board/1">Board</Link>
         <Link to="/analytics">Analytics</Link>
         <Link to="/settings">Settings</Link>
         <Link to="/profile">Profile</Link>

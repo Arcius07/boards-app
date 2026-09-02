@@ -1,0 +1,94 @@
+@reference "tailwindcss";
+
+.board-page {
+  @apply min-h-screen text-white;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99,102,241,0.1), transparent), #05070f;
+}
+
+.board-loading {
+  @apply min-h-screen flex items-center justify-center bg-[#05070f] text-white text-sm;
+}
+
+.board-nav {
+  @apply flex items-center gap-4 px-6 py-4 border-b border-white/10 bg-white/[0.02];
+}
+
+.board-back-btn {
+  @apply w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-white transition;
+}
+
+.board-logo {
+  @apply flex items-center gap-2 font-bold shrink-0;
+}
+
+.board-logo-icon {
+  @apply w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center;
+}
+
+.board-name {
+  @apply text-lg font-semibold ml-2;
+}
+
+.board-lists-row {
+  @apply flex items-start gap-4 p-6 overflow-x-auto;
+}
+
+.board-list {
+  @apply bg-white/[0.03] border border-white/10 rounded-xl p-3 w-72 shrink-0;
+}
+
+.board-list-header {
+  @apply flex items-center justify-between font-semibold text-sm px-1 mb-3;
+}
+
+.board-list-count {
+  @apply bg-white/10 text-gray-300 text-xs font-bold rounded-full px-2 py-0.5;
+}
+
+.board-list-cards {
+  @apply flex flex-col gap-2 mb-2;
+}
+
+.board-card {
+  @apply bg-white/[0.05] border border-white/10 rounded-lg p-3 hover:border-white/20 cursor-pointer transition;
+}
+
+.board-card-title {
+  @apply text-sm font-medium mb-2;
+}
+
+.board-card-footer {
+  @apply flex items-center gap-1 text-xs text-gray-500;
+}
+
+.board-add-card-btn {
+  @apply w-full flex items-center gap-2 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg px-2 py-2 text-sm transition;
+}
+
+.board-add-list-btn {
+  @apply w-full flex items-center justify-center gap-2 text-gray-500 hover:text-gray-300 rounded-lg px-2 py-3 text-sm border border-dashed border-white/15 hover:border-white/30 transition;
+}
+
+.board-list-new {
+  @apply bg-transparent border-none p-0;
+}
+
+.board-add-form {
+  @apply flex flex-col gap-2;
+}
+
+.board-add-input {
+  @apply w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500;
+}
+
+.board-add-actions {
+  @apply flex items-center gap-2;
+}
+
+.board-add-confirm {
+  @apply bg-indigo-600 hover:bg-indigo-500 transition rounded-lg px-3 py-1.5 text-xs font-semibold;
+}
+
+.board-add-cancel {
+  @apply text-gray-400 hover:text-white text-xs px-2;
+}
