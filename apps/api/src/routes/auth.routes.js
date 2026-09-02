@@ -91,6 +91,21 @@ module.exports = (prisma) => {
   });
 
 
+  router.post("/refresh", async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(401).json({ error: "No refresh token" });
+    }
+
+    try {
+      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      const { accessToken } = generateTokens(payload.userId);
+      res.json({ accessToken });
+    } catch (err) {
+      return res.status(401).json({ error: "Invalid or expired refresh token" });
+    }
+  });
+
   router.post("/login", authLimiter, async (req, res) => {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {

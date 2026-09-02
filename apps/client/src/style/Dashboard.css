@@ -1,0 +1,173 @@
+@reference "tailwindcss";
+
+.dashboard-page {
+  @apply min-h-screen text-white;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99,102,241,0.1), transparent), #05070f;
+}
+
+.dashboard-loading {
+  @apply min-h-screen flex items-center justify-center bg-[#05070f] text-white text-sm;
+}
+
+/* ---------- Top nav ---------- */
+.dashboard-nav {
+  @apply flex items-center gap-6 px-6 py-4 border-b border-white/10 bg-white/[0.02];
+}
+
+.dashboard-logo {
+  @apply flex items-center gap-2 text-lg font-bold shrink-0;
+}
+
+.dashboard-logo-icon {
+  @apply w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center;
+}
+
+.dashboard-workspace-switch {
+  @apply flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm font-medium cursor-pointer hover:bg-white/10 transition shrink-0;
+}
+
+.dashboard-workspace-avatar {
+  @apply w-5 h-5 rounded bg-indigo-500 flex items-center justify-center text-[10px] font-bold;
+}
+
+.dashboard-nav-tabs {
+  @apply flex items-center gap-5 text-sm text-gray-400;
+}
+
+.dashboard-nav-tab {
+  @apply cursor-pointer hover:text-white transition;
+}
+
+.dashboard-nav-tab-active {
+  @apply text-white font-semibold;
+}
+
+.dashboard-search {
+  @apply flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-gray-500 ml-auto w-52 cursor-pointer;
+}
+
+.dashboard-icon-btn {
+  @apply w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-white transition;
+}
+
+.dashboard-avatar-menu {
+  @apply flex items-center gap-2;
+}
+
+.dashboard-avatar-img {
+  @apply w-8 h-8 rounded-full object-cover;
+}
+
+.dashboard-logout-btn {
+  @apply w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-white/5 hover:text-red-400 transition;
+}
+
+/* ---------- Main content ---------- */
+.dashboard-main {
+  @apply max-w-6xl mx-auto px-6 py-10;
+}
+
+.dashboard-header-row {
+  @apply flex items-start justify-between mb-8;
+}
+
+.dashboard-title {
+  @apply text-2xl font-bold;
+}
+
+.dashboard-subtitle {
+  @apply text-gray-400 text-sm mt-1;
+}
+
+.dashboard-new-btn {
+  @apply flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 transition rounded-lg px-4 py-2.5 text-sm font-semibold;
+}
+
+.dashboard-error {
+  @apply text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2 mb-6;
+}
+
+.dashboard-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10;
+}
+
+.dashboard-board-card {
+  @apply bg-white/[0.03] border border-white/10 rounded-xl overflow-hidden cursor-pointer hover:border-white/20 transition;
+}
+
+.dashboard-board-header {
+  @apply flex items-center gap-2 px-4 py-3 font-semibold text-sm text-white;
+}
+
+.dashboard-board-body {
+  @apply p-4;
+}
+
+.dashboard-board-lines {
+  @apply h-2 rounded bg-white/10 mb-2 w-full;
+}
+
+.dashboard-board-lines-short {
+  @apply w-2/3;
+}
+
+.dashboard-board-footer {
+  @apply flex items-center justify-between mt-4 text-xs text-gray-400;
+}
+
+.dashboard-board-members {
+  @apply flex items-center gap-1.5;
+}
+
+.dashboard-board-card-new {
+  @apply flex flex-col items-center justify-center gap-2 border border-dashed border-white/15 rounded-xl text-gray-500 text-sm cursor-pointer hover:border-white/30 hover:text-gray-300 transition min-h-[148px];
+}
+
+.dashboard-board-new-icon {
+  @apply w-10 h-10 rounded-full border border-white/15 flex items-center justify-center;
+}
+
+.dashboard-activity-card {
+  @apply bg-white/[0.03] border border-white/10 rounded-xl p-6;
+}
+
+.dashboard-activity-title {
+  @apply font-semibold text-sm mb-2;
+}
+
+.dashboard-activity-empty {
+  @apply text-gray-500 text-sm;
+}
+
+/* ---------- Create board modal ---------- */
+.dashboard-modal-overlay {
+  @apply fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+.dashboard-modal {
+  @apply w-full max-w-sm bg-[#0b0e1a] border border-white/10 rounded-2xl p-6 shadow-2xl;
+}
+
+.dashboard-modal-title {
+  @apply text-lg font-bold mb-4;
+}
+
+.dashboard-modal-form {
+  @apply flex flex-col gap-4;
+}
+
+.dashboard-modal-input {
+  @apply w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500;
+}
+
+.dashboard-modal-actions {
+  @apply flex justify-end gap-3;
+}
+
+.dashboard-modal-cancel {
+  @apply px-4 py-2 text-sm text-gray-400 hover:text-white transition;
+}
+
+.dashboard-modal-submit {
+  @apply bg-indigo-600 hover:bg-indigo-500 transition rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50;
+}
