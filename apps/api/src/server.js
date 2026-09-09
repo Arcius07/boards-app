@@ -1,7 +1,9 @@
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
+const { initSocket } = require("./sockets/io");
 const { PrismaClient } = require("@prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 
@@ -39,5 +41,8 @@ app.use("/lists", listRoutes(prisma));
 const cardRoutes = require("./routes/card.routes");
 app.use("/cards", cardRoutes(prisma));
 
+const httpServer = http.createServer(app);
+initSocket(httpServer);
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+httpServer.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

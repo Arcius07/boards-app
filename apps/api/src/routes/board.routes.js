@@ -2,6 +2,8 @@ const express = require("express");
 const { z } = require("zod");
 const requireAuth = require("../middleware/auth");
 
+const { getIO } = require("../sockets/io");
+
 const router = express.Router();
 
 const createListSchema = z.object({
@@ -39,31 +41,35 @@ module.exports = (prisma) => {
     }
   });
 
-  router.post("/:id/lists", requireAuth, async (req, res) => {
-    const parsed = createListSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ error: parsed.error.issues[0].message });
-    }
+    router.post("/:id/lists", requireAuth, async (req, res) => {
+      const parsed = createListSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.issues[0].message });
+      }
 
-    try {
-      const lastList = await prisma.list.findFirst({
-        where: { boardId: req.params.id },
-        orderBy: { position: "desc" },
-      });
-      const nextPosition = lastList ? lastList.position + 1 : 1;
+      try {
+        const lastList = await prisma.list.findFirst({
+          where: { boardId: req.params.id },
+          orderBy: { position: "desc" },
+        });
+        const nextPosition = lastList ? lastList.position + 1 : 1;
 
-      const list = await prisma.list.create({
-        data: {
-          name: parsed.data.name,
-          boardId: req.params.id,
-          position: nextPosition,
-        },
-      });
-      res.status(201).json({ list: { ...list, cards: [] } });
-    } catch (err) {
-      res.status(500).json({ error: "Failed to create list" });
-    }
-  });
+        const list = await prisma.list.create({
+          data: {
+            name: parsed.data.name,
+            boardId: req.params.id,
+            position: nextPosition,
+          },
+        });
+
+        const io = getIO();
+        io.to(`board:${req.params.id}`).emit("list:created", { list: { ...list, cards: [] } });
+
+        res.status(201).json({ list: { ...list, cards: [] } });
+      } catch (err) {
+        res.status(500).json({ error: "Failed to create list" });
+      }
+    });
 
   return router;
 };
