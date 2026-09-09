@@ -153,6 +153,7 @@ function BoardView() {
     try {
       await api.patch(`/cards/${activeCardId}`, {
         listId: destListId,
+        boardId: board.id,
         position: newPosition,
       });
     } catch (err) {
