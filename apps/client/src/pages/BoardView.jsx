@@ -16,6 +16,10 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
+import { io } from "socket.io-client";
+import useAuthStore from "../store/authStore";
+
 import api from "../api/client";
 import "../style/BoardView.css";
 
@@ -66,8 +70,62 @@ function BoardView() {
   );
 
   useEffect(() => {
-    loadBoard();
-  }, [boardId]);
+  loadBoard();
+}, [boardId]);
+
+  useEffect(() => {
+  const accessToken = useAuthStore.getState().accessToken;
+  const socket = io("http://localhost:5000", {
+    auth: { token: accessToken },
+  });
+
+  socket.on("connect", () => {
+    socket.emit("join-board", boardId);
+  });
+
+  socket.on("card:moved", ({ card }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const listsWithoutCard = prevBoard.lists.map((list) => ({
+        ...list,
+        cards: list.cards.filter((c) => c.id !== card.id),
+      }));
+      const newLists = listsWithoutCard.map((list) => {
+        if (list.id !== card.listId) return list;
+        const newCards = [...list.cards, card].sort((a, b) => a.position - b.position);
+        return { ...list, cards: newCards };
+      });
+      return { ...prevBoard, lists: newLists };
+    });
+  });
+
+  socket.on("card:created", ({ card }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const alreadyExists = prevBoard.lists.some((list) =>
+        list.cards.some((c) => c.id === card.id)
+      );
+      if (alreadyExists) return prevBoard;
+      const newLists = prevBoard.lists.map((list) =>
+        list.id === card.listId ? { ...list, cards: [...list.cards, card] } : list
+      );
+      return { ...prevBoard, lists: newLists };
+    });
+  });
+
+  socket.on("list:created", ({ list }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const alreadyExists = prevBoard.lists.some((l) => l.id === list.id);
+      if (alreadyExists) return prevBoard;
+      return { ...prevBoard, lists: [...prevBoard.lists, list] };
+    });
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, [boardId]);
 
   async function loadBoard() {
     setLoading(true);
