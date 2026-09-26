@@ -18,18 +18,28 @@ module.exports = (prisma) => {
   router.get("/:id", requireAuth, async (req, res) => {
     try {
       const board = await prisma.board.findUnique({
-        where: { id: req.params.id },
-        include: {
-          lists: {
-            orderBy: { position: "asc" },
-            include: {
-              cards: {
-                orderBy: { position: "asc" },
+      where: { id: req.params.id },
+      include: {
+        lists: {
+          orderBy: { position: "asc" },
+          include: {
+            cards: {
+              orderBy: { position: "asc" },
+              include: {
+                comments: {
+                  orderBy: { createdAt: "asc" },
+                  include: {
+                    user: {
+                      select: { id: true, name: true },
+                    },
+                  },
+                },
               },
             },
           },
         },
-      });
+      },
+    });
 
       if (!board) {
         return res.status(404).json({ error: "Board not found" });

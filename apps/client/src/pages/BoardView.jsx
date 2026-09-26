@@ -32,7 +32,119 @@ function DroppableList({ listId, children }) {
   );
 }
 
-function SortableCard({ card }) {
+function CardDetailModal({ card, onClose, onSave, onAddComment }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [commentText, setCommentText] = useState("");
+
+  useEffect(() => {
+    if (card) {
+      setTitle(card.title);
+      setDescription(card.description || "");
+    }
+  }, [card]);
+
+  if (!card) return null;
+
+  function handleTitleBlur() {
+    setEditingTitle(false);
+    if (title.trim() && title !== card.title) {
+      onSave(card.id, { title: title.trim() });
+    }
+  }
+
+  function handleDescriptionBlur() {
+    setEditingDescription(false);
+    if (description !== (card.description || "")) {
+      onSave(card.id, { description });
+    }
+  }
+
+  function handleCommentSubmit(e) {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    onAddComment(card.id, commentText.trim());
+    setCommentText("");
+  }
+
+  const comments = card.comments || [];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          {editingTitle ? (
+            <input
+              className="modal-title-input"
+              value={title}
+              autoFocus
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleTitleBlur}
+              onKeyDown={(e) => e.key === "Enter" && e.target.blur()}
+            />
+          ) : (
+            <h2 className="modal-title" onClick={() => setEditingTitle(true)}>
+              {card.title}
+            </h2>
+          )}
+          <button className="modal-close-btn" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+
+        <div className="modal-body">
+          {editingDescription ? (
+            <textarea
+              className="modal-description-input"
+              value={description}
+              autoFocus
+              rows={4}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={handleDescriptionBlur}
+            />
+          ) : (
+            <p
+              className={description ? "modal-description-text" : "modal-placeholder-text"}
+              onClick={() => setEditingDescription(true)}
+            >
+              {description || "Click to add a description..."}
+            </p>
+          )}
+        </div>
+
+        <div className="modal-comments-section">
+          <h3 className="modal-comments-heading">Comments ({comments.length})</h3>
+
+          <div className="modal-comments-list">
+            {comments.map((comment) => (
+              <div key={comment.id} className="modal-comment">
+                <div className="modal-comment-author">{comment.user.name}</div>
+                <div className="modal-comment-text">{comment.text}</div>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleCommentSubmit} className="modal-comment-form">
+            <input
+              type="text"
+              className="modal-comment-input"
+              placeholder="Write a comment..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+            />
+            <button type="submit" className="modal-comment-submit">
+              Send
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SortableCard({ card, onClick }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id, data: { type: "card", card } });
 
@@ -43,7 +155,14 @@ function SortableCard({ card }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="board-card" {...attributes} {...listeners}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="board-card"
+      {...attributes}
+      {...listeners}
+      onClick={() => onClick(card)}
+    >
       <div className="board-card-title">{card.title}</div>
       <div className="board-card-footer">
         <MessageSquare size={12} /> 0
@@ -64,6 +183,7 @@ function BoardView() {
   const [showAddList, setShowAddList] = useState(false);
   const [addingCardListId, setAddingCardListId] = useState(null);
   const [addingCardTitle, setAddingCardTitle] = useState("");
+  const [selectedCard, setSelectedCard] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -112,6 +232,39 @@ function BoardView() {
       return { ...prevBoard, lists: newLists };
     });
   });
+
+  socket.on("card:updated", ({ card }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const newLists = prevBoard.lists.map((list) => ({
+        ...list,
+        cards: list.cards.map((c) => (c.id === card.id ? { ...c, ...card } : c)),
+      }));
+      return { ...prevBoard, lists: newLists };
+    });
+  });
+
+  socket.on("comment:created", ({ comment }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const newLists = prevBoard.lists.map((list) => ({
+        ...list,
+        cards: list.cards.map((c) =>
+          c.id === comment.cardId
+            ? { ...c, comments: [...(c.comments || []), comment] }
+            : c
+        ),
+      }));
+      return { ...prevBoard, lists: newLists };
+    });
+
+    setSelectedCard((prevSelected) =>
+      prevSelected && prevSelected.id === comment.cardId
+        ? { ...prevSelected, comments: [...(prevSelected.comments || []), comment] }
+        : prevSelected
+    );
+  });
+
 
   socket.on("list:created", ({ list }) => {
     setBoard((prevBoard) => {
@@ -167,7 +320,6 @@ function BoardView() {
     let destIndex;
 
     if (sourceList.id === destListId) {
-      // Reordering within the same list — arrayMove handles the index math correctly
       const overIndex = overIsCard
         ? destList.cards.findIndex((c) => c.id === over.id)
         : destList.cards.length - 1;
@@ -258,6 +410,30 @@ function BoardView() {
     }
   }
 
+  async function handleSaveCard(cardId, updates) {
+    try {
+      const res = await api.patch(`/cards/${cardId}`, updates);
+      setBoard((prevBoard) => ({
+        ...prevBoard,
+        lists: prevBoard.lists.map((list) => ({
+          ...list,
+          cards: list.cards.map((c) => (c.id === cardId ? res.data.card : c)),
+        })),
+      }));
+      setSelectedCard(res.data.card);
+    } catch (err) {
+      setError("Failed to save card");
+    }
+  }
+
+  async function handleAddComment(cardId, text) {
+    try {
+      await api.post(`/cards/${cardId}/comments`, { text });
+    } catch (err) {
+      setError("Failed to post comment");
+    }
+  }
+
   if (loading) {
     return <div className="board-loading">Loading board...</div>;
   }
@@ -300,7 +476,7 @@ function BoardView() {
               >
                 <DroppableList listId={list.id}>
                   {list.cards.map((card) => (
-                    <SortableCard key={card.id} card={card} />
+                    <SortableCard key={card.id} card={card} onClick={setSelectedCard} />
                   ))}
                 </DroppableList>
               </SortableContext>
@@ -373,6 +549,7 @@ function BoardView() {
           </div>
         </div>
       </DndContext>
+      <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} onSave={handleSaveCard} onAddComment={handleAddComment} />
     </div>
   );
 }

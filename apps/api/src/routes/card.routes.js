@@ -5,32 +5,97 @@ const { getIO } = require("../sockets/io");
 
 const router = express.Router();
 
-const moveCardSchema = z.object({
-  listId: z.string(),
-  boardId: z.string(),
-  position: z.number(),
+const updateCardSchema = z.object({
+  listId: z.string().optional(),
+  boardId: z.string().optional(),
+  position: z.number().optional(),
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
 });
 
 module.exports = (prisma) => {
-    router.patch("/:id", requireAuth, async (req, res) => {
-      const parsed = moveCardSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: parsed.error.issues[0].message });
-      }
-      try {
-        const card = await prisma.card.update({
-          where: { id: req.params.id },
-          data: { listId: parsed.data.listId, position: parsed.data.position },
-        });
+  router.patch("/:id", requireAuth, async (req, res) => {
+    const parsed = updateCardSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
 
-        const io = getIO();
-        io.to(`board:${parsed.data.boardId}`).emit("card:moved", { card });
+    const { listId, boardId, position, title, description } = parsed.data;
 
-        res.json({ card });
-      } catch (err) {
-        res.status(500).json({ error: "Failed to move card" });
+    if (
+      listId === undefined &&
+      position === undefined &&
+      title === undefined &&
+      description === undefined
+    ) {
+      return res.status(400).json({ error: "No fields provided to update" });
+    }
+
+    const dataToUpdate = {};
+    if (listId !== undefined) dataToUpdate.listId = listId;
+    if (position !== undefined) dataToUpdate.position = position;
+    if (title !== undefined) dataToUpdate.title = title;
+    if (description !== undefined) dataToUpdate.description = description;
+
+    try {
+      const card = await prisma.card.update({
+        where: { id: req.params.id },
+        data: dataToUpdate,
+      });
+
+      const isMove = listId !== undefined || position !== undefined;
+      const io = getIO();
+
+      if (isMove) {
+        if (!boardId) {
+          return res.status(400).json({ error: "boardId is required when moving a card" });
+        }
+        io.to(`board:${boardId}`).emit("card:moved", { card });
+      } else {
+        const list = await prisma.list.findUnique({ where: { id: card.listId } });
+        io.to(`board:${list.boardId}`).emit("card:updated", { card });
       }
-    });
+
+      res.json({ card });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update card" });
+    }
+  });
+
+  const createCommentSchema = z.object({
+    text: z.string().min(1),
+  });
+
+  router.post("/:id/comments", requireAuth, async (req, res) => {
+    const parsed = createCommentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+
+    try {
+      const comment = await prisma.comment.create({
+        data: {
+          text: parsed.data.text,
+          cardId: req.params.id,
+          userId: req.userId,
+        },
+        include: {
+          user: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+
+      const card = await prisma.card.findUnique({ where: { id: req.params.id } });
+      const list = await prisma.list.findUnique({ where: { id: card.listId } });
+
+      getIO().to(`board:${list.boardId}`).emit("comment:created", { comment });
+
+      res.status(201).json({ comment });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to create comment" });
+    }
+});
 
   return router;
 };
