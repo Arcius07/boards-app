@@ -44,7 +44,7 @@ module.exports = (prisma) => {
     try {
       const user = await prisma.user.findUnique({
         where: { id: req.userId },
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true, avatarUrl: true },
       });
       if (!user) return res.status(404).json({ error: "User not found" });
       res.json({ user });

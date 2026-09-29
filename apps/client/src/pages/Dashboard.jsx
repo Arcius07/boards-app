@@ -121,7 +121,11 @@ function Dashboard() {
         </button>
 
         <div className="dashboard-avatar-menu">
-          <img className="dashboard-avatar-img" src={avatarUrl(user?.name || "User")} alt="" />
+          <img
+            className="dashboard-avatar-img"
+            src={user?.avatarUrl || avatarUrl(user?.name || "User")}
+            alt=""
+          />
           <button className="dashboard-logout-btn" onClick={handleLogout} title="Log out">
             <LogOut size={16} />
           </button>

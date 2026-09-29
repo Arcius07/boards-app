@@ -1,4 +1,16 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from "react-router-dom";
+import {
+  Menu,
+  X,
+  LayoutGrid,
+  UserPlus,
+  LogIn,
+  Grid3x3,
+  BarChart3,
+  Settings as SettingsIcon,
+  User,
+  LogOut,
+} from "lucide-react";
 import Landing from "./pages/Landing";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
@@ -13,7 +25,79 @@ import api from "./api/client";
 import useAuthStore from "./store/authStore";
 
 import RequireAuth from "./components/RequireAuth";
+import "./App.css";
 
+function DevSidebar() {
+  const [open, setOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const location = useLocation();
+
+  const hiddenPaths = ["/login", "/signup"];
+  if (hiddenPaths.includes(location.pathname)) {
+    return null;
+  }
+
+  function handleLogout() {
+    clearAuth();
+    setOpen(false);
+  }
+
+  return (
+    <>
+      <button className="dev-edge-tab" onClick={() => setOpen(true)}>
+        <Menu size={14} />
+      </button>
+
+      {open && (
+        <div className="dev-sidebar-overlay" onClick={() => setOpen(false)}>
+          <div className="dev-sidebar" onClick={(e) => e.stopPropagation()}>
+            <div className="dev-sidebar-header">
+              <span className="dev-nav-badge">DEV NAV</span>
+              <button className="dev-sidebar-close" onClick={() => setOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="dev-sidebar-links">
+              {!user ? (
+                <>
+                  <NavLink to="/" end className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <LayoutGrid size={15} /> Landing
+                  </NavLink>
+                  <NavLink to="/signup" className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <UserPlus size={15} /> Signup
+                  </NavLink>
+                  <NavLink to="/login" className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <LogIn size={15} /> Login
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/dashboard" className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <Grid3x3 size={15} /> Dashboard
+                  </NavLink>
+                  <NavLink to="/analytics" className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <BarChart3 size={15} /> Analytics
+                  </NavLink>
+                  <NavLink to="/settings" className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <SettingsIcon size={15} /> Settings
+                  </NavLink>
+                  <NavLink to="/profile" className="dev-nav-link" onClick={() => setOpen(false)}>
+                    <User size={15} /> Profile
+                  </NavLink>
+                  <button className="dev-nav-link dev-nav-logout" onClick={handleLogout}>
+                    <LogOut size={15} /> Log out
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function App() {
 
@@ -39,15 +123,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <nav className="p-4 bg-gray-100 flex gap-4 text-sm">
-        <Link to="/">Landing</Link>
-        <Link to="/signup">Signup</Link>
-        <Link to="/login">Login</Link>
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/analytics">Analytics</Link>
-        <Link to="/settings">Settings</Link>
-        <Link to="/profile">Profile</Link>
-      </nav>
+      <DevSidebar />
 
       <Routes>
         <Route path="/" element={<Landing />} />

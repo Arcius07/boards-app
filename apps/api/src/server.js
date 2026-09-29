@@ -41,6 +41,12 @@ app.use("/lists", listRoutes(prisma));
 const cardRoutes = require("./routes/card.routes");
 app.use("/cards", cardRoutes(prisma));
 
+const userRoutes = require("./routes/user.routes");
+app.use("/users", userRoutes(prisma));
+
+const uploadRoutes = require("./routes/upload.routes");
+app.use("/uploads", uploadRoutes);
+
 const httpServer = http.createServer(app);
 initSocket(httpServer);
 
