@@ -54,7 +54,7 @@ module.exports = (prisma) => {
         return res.status(404).json({ error: "Board not found" });
       }
 
-      res.json({ board });
+      res.json({ board, myRole: req.membership.role });
     } catch (err) {
       res.status(500).json({ error: "Failed to fetch board" });
     }

@@ -32,7 +32,7 @@ function DroppableList({ listId, children }) {
   );
 }
 
-function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment, onDeleteAttachment }) {
+function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAttachment, onDeleteAttachment }) {
   
   const currentUser = useAuthStore((state) => state.user);
   const [title, setTitle] = useState("");
@@ -43,6 +43,7 @@ function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment,
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
+  const [myRole, setMyRole] = useState("member");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -249,7 +250,7 @@ function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment,
                     <div className="modal-attachment-name">{att.filename}</div>
                     <div className="modal-attachment-uploader">by {att.user.name}</div>
                   </div>
-                  {att.uploadedBy === currentUser?.id && (
+                  {(att.uploadedBy === currentUser?.id || isAdmin) && (
                     <button
                       className="modal-attachment-delete"
                       title="Delete attachment"
@@ -340,6 +341,7 @@ function BoardView() {
   const [addingCardListId, setAddingCardListId] = useState(null);
   const [addingCardTitle, setAddingCardTitle] = useState("");
   const [selectedCard, setSelectedCard] = useState(null);
+  const [myRole, setMyRole] = useState("member");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -486,6 +488,7 @@ function BoardView() {
     try {
       const res = await api.get(`/boards/${boardId}`);
       setBoard(res.data.board);
+      setMyRole(res.data.myRole);
     } catch (err) {
       setError("Failed to load board");
     } finally {
@@ -768,6 +771,7 @@ function BoardView() {
       </DndContext>
       <CardDetailModal
         card={selectedCard}
+        isAdmin={myRole === "admin"}
         onClose={() => setSelectedCard(null)}
         onSave={handleSaveCard}
         onAddComment={handleAddComment}
