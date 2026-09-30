@@ -51,7 +51,7 @@ function Profile() {
 
     try {
       const signRes = await api.post("/uploads/sign", { type: "avatar" });
-      const { signature, timestamp, cloudName, apiKey, folder } = signRes.data;
+      const { signature, timestamp, cloudName, apiKey, folder, allowedFormats } = signRes.data;
 
       const formData = new FormData();
       formData.append("file", file);
@@ -59,6 +59,7 @@ function Profile() {
       formData.append("timestamp", timestamp);
       formData.append("api_key", apiKey);
       formData.append("folder", folder);
+      formData.append("allowed_formats", allowedFormats);
 
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
       const cloudinaryData = await uploadWithProgress(uploadUrl, formData, setUploadProgress);

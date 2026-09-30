@@ -23,6 +23,7 @@ model User {
   assignedCards        Card[]            @relation("CardAssignee")
   comments             Comment[]
   activityLogs         ActivityLog[]
+  attachments          Attachment[]
 }
 
 model Workspace {
@@ -84,6 +85,7 @@ model Card {
   assignee User?       @relation("CardAssignee", fields: [assigneeId], references: [id])
   labels   CardLabel[]
   comments Comment[]
+  attachments Attachment[]
 }
 
 model Label {
@@ -115,6 +117,19 @@ model Comment {
 
   card Card @relation(fields: [cardId], references: [id])
   user User @relation(fields: [userId], references: [id])
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  cardId     String
+  url        String
+  filename   String
+  fileType   String
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  card Card @relation(fields: [cardId], references: [id])
+  user User @relation(fields: [uploadedBy], references: [id])
 }
 
 model ActivityLog {

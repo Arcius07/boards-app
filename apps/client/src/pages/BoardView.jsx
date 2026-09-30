@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Grid3x3, ArrowLeft, Plus, MessageSquare, GripVertical } from "lucide-react";
+import { Grid3x3, ArrowLeft, Plus, MessageSquare, GripVertical, Paperclip, FileText, X, Loader2 } from "lucide-react";
 import {
   DndContext,
   closestCorners,
@@ -32,12 +32,16 @@ function DroppableList({ listId, children }) {
   );
 }
 
-function CardDetailModal({ card, onClose, onSave, onAddComment }) {
+function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (card) {
@@ -69,7 +73,86 @@ function CardDetailModal({ card, onClose, onSave, onAddComment }) {
     setCommentText("");
   }
 
+  function handleAttachClick() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleFileSelected(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+
+    if (!isImage && !isPdf) {
+      setUploadError("Only images and PDFs are allowed");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File must be under 10MB");
+      return;
+    }
+
+    setUploadError("");
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const signRes = await api.post("/uploads/sign", { type: "attachment" });
+      const { signature, timestamp, cloudName, apiKey, folder, allowedFormats } = signRes.data;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("signature", signature);
+      formData.append("timestamp", timestamp);
+      formData.append("api_key", apiKey);
+      formData.append("folder", folder);
+      formData.append("allowed_formats", allowedFormats);
+
+      const resourceType = isPdf ? "raw" : "image";
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+      const cloudinaryData = await uploadWithProgress(uploadUrl, formData, setUploadProgress);
+
+      await onAddAttachment(card.id, {
+        url: cloudinaryData.secure_url,
+        filename: file.name,
+        fileType: isPdf ? "pdf" : "image",
+      });
+    } catch (err) {
+      setUploadError("Failed to upload file");
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      e.target.value = "";
+    }
+  }
+
+  function uploadWithProgress(url, formData, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error("Upload failed"));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Upload failed"));
+      xhr.send(formData);
+    });
+  }
+
   const comments = card.comments || [];
+  const attachments = card.attachments || [];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -111,6 +194,61 @@ function CardDetailModal({ card, onClose, onSave, onAddComment }) {
             >
               {description || "Click to add a description..."}
             </p>
+          )}
+        </div>
+
+        <div className="modal-attachments-section">
+          <div className="modal-attachments-heading-row">
+            <h3 className="modal-attachments-heading">
+              Attachments ({attachments.length})
+            </h3>
+            <button
+              className="modal-attach-btn"
+              onClick={handleAttachClick}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <Loader2 size={13} className="modal-spinner" />
+              ) : (
+                <Paperclip size={13} />
+              )}
+              {uploading ? `${uploadProgress}%` : "Add file"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              className="modal-file-input"
+              onChange={handleFileSelected}
+            />
+          </div>
+
+          {uploadError && <div className="modal-upload-error">{uploadError}</div>}
+
+          {attachments.length > 0 && (
+            <div className="modal-attachments-list">
+              {attachments.map((att) => (
+                <a
+                  key={att.id}
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="modal-attachment-item"
+                >
+                  {att.fileType === "image" ? (
+                    <img src={att.url} alt={att.filename} className="modal-attachment-thumb" />
+                  ) : (
+                    <div className="modal-attachment-icon">
+                      <FileText size={18} />
+                    </div>
+                  )}
+                  <div className="modal-attachment-info">
+                    <div className="modal-attachment-name">{att.filename}</div>
+                    <div className="modal-attachment-uploader">by {att.user.name}</div>
+                  </div>
+                </a>
+              ))}
+            </div>
           )}
         </div>
 
@@ -261,6 +399,27 @@ function BoardView() {
     setSelectedCard((prevSelected) =>
       prevSelected && prevSelected.id === comment.cardId
         ? { ...prevSelected, comments: [...(prevSelected.comments || []), comment] }
+        : prevSelected
+    );
+  });
+
+  socket.on("attachment:created", ({ attachment }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const newLists = prevBoard.lists.map((list) => ({
+        ...list,
+        cards: list.cards.map((c) =>
+          c.id === attachment.cardId
+            ? { ...c, attachments: [...(c.attachments || []), attachment] }
+            : c
+        ),
+      }));
+      return { ...prevBoard, lists: newLists };
+    });
+
+    setSelectedCard((prevSelected) =>
+      prevSelected && prevSelected.id === attachment.cardId
+        ? { ...prevSelected, attachments: [...(prevSelected.attachments || []), attachment] }
         : prevSelected
     );
   });
@@ -430,7 +589,15 @@ function BoardView() {
     try {
       await api.post(`/cards/${cardId}/comments`, { text });
     } catch (err) {
-      setError("Failed to post comment");
+      setError("Failed to add comment");
+    }
+  }
+
+  async function handleAddAttachment(cardId, attachmentData) {
+    try {
+      await api.post(`/cards/${cardId}/attachments`, attachmentData);
+    } catch (err) {
+      setError("Failed to save attachment");
     }
   }
 
@@ -549,7 +716,13 @@ function BoardView() {
           </div>
         </div>
       </DndContext>
-      <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} onSave={handleSaveCard} onAddComment={handleAddComment} />
+      <CardDetailModal
+        card={selectedCard}
+        onClose={() => setSelectedCard(null)}
+        onSave={handleSaveCard}
+        onAddComment={handleAddComment}
+        onAddAttachment={handleAddAttachment}
+      />
     </div>
   );
 }

@@ -34,6 +34,14 @@ module.exports = (prisma) => {
                     },
                   },
                 },
+                attachments: {
+                  orderBy: { createdAt: "asc" },
+                  include: {
+                    user: {
+                      select: { id: true, name: true },
+                    },
+                  },
+                },
               },
             },
           },

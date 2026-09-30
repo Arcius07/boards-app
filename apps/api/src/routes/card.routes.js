@@ -97,5 +97,44 @@ module.exports = (prisma) => {
     }
 });
 
+  const createAttachmentSchema = z.object({
+    url: z.string().min(1),
+    filename: z.string().min(1),
+    fileType: z.enum(["image", "pdf"]),
+  });
+
+  router.post("/:id/attachments", requireAuth, async (req, res) => {
+    const parsed = createAttachmentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0].message });
+    }
+
+    try {
+      const attachment = await prisma.attachment.create({
+        data: {
+          cardId: req.params.id,
+          url: parsed.data.url,
+          filename: parsed.data.filename,
+          fileType: parsed.data.fileType,
+          uploadedBy: req.userId,
+        },
+        include: {
+          user: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+
+      const card = await prisma.card.findUnique({ where: { id: req.params.id } });
+      const list = await prisma.list.findUnique({ where: { id: card.listId } });
+
+      getIO().to(`board:${list.boardId}`).emit("attachment:created", { attachment });
+
+      res.status(201).json({ attachment });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to create attachment" });
+    }
+  });
+
   return router;
 };

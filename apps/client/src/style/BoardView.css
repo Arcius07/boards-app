@@ -168,3 +168,59 @@
 .modal-comment-submit {
   @apply bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors;
 }
+
+.modal-attachments-section {
+  @apply mt-4 pt-4 border-t border-white/10;
+}
+
+.modal-attachments-heading-row {
+  @apply flex items-center justify-between mb-3;
+}
+
+.modal-attachments-heading {
+  @apply text-sm font-semibold text-white/80;
+}
+
+.modal-attach-btn {
+  @apply flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg px-2.5 py-1.5 transition-colors disabled:opacity-60;
+}
+
+.modal-file-input {
+  @apply hidden;
+}
+
+.modal-spinner {
+  @apply animate-spin;
+}
+
+.modal-upload-error {
+  @apply text-xs text-red-400 mb-2;
+}
+
+.modal-attachments-list {
+  @apply flex flex-col gap-2;
+}
+
+.modal-attachment-item {
+  @apply flex items-center gap-3 bg-white/[0.03] hover:bg-white/[0.06] rounded-lg px-3 py-2 transition-colors cursor-pointer;
+}
+
+.modal-attachment-thumb {
+  @apply w-10 h-10 rounded object-cover shrink-0;
+}
+
+.modal-attachment-icon {
+  @apply w-10 h-10 rounded bg-white/5 flex items-center justify-center text-white/40 shrink-0;
+}
+
+.modal-attachment-info {
+  @apply flex flex-col min-w-0;
+}
+
+.modal-attachment-name {
+  @apply text-sm text-white/80 truncate;
+}
+
+.modal-attachment-uploader {
+  @apply text-xs text-white/40;
+}
