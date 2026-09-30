@@ -228,3 +228,84 @@
 .modal-attachment-delete {
   @apply ml-auto shrink-0 p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors;
 }
+
+.board-card-labels {
+  @apply flex gap-1 flex-wrap mb-2;
+}
+
+.board-card-label-bar {
+  @apply h-1.5 w-8 rounded-full;
+}
+
+.board-card-meta {
+  @apply inline-flex items-center gap-1;
+}
+
+.board-card-due {
+  @apply inline-flex items-center gap-1 text-[11px] bg-white/5 rounded px-1.5 py-0.5;
+}
+
+.board-card-due-overdue {
+  @apply text-red-300 bg-red-500/15;
+}
+
+.board-card-assignee {
+  @apply ml-auto w-5 h-5 rounded-full object-cover bg-gradient-to-br from-indigo-500 to-violet-500 text-[10px] font-semibold text-white flex items-center justify-center;
+}
+
+.modal-details {
+  @apply flex flex-col gap-4 py-5 border-t border-white/10;
+}
+
+.modal-detail-row {
+  @apply flex items-center gap-4;
+}
+
+.modal-detail-row-top {
+  @apply items-start;
+}
+
+.modal-detail-label {
+  @apply w-28 shrink-0 flex items-center gap-2 text-xs font-medium text-white/50;
+}
+
+.modal-select {
+  @apply bg-black/30 border border-white/10 focus:border-indigo-400/60 outline-none rounded-lg px-3 py-2 text-sm text-white transition-colors;
+  color-scheme: dark;
+}
+
+.modal-select option {
+  @apply bg-[#0b0e1a] text-white;
+}
+
+.modal-labels-wrap {
+  @apply flex-1 flex flex-col gap-3;
+}
+
+.modal-labels-list {
+  @apply flex flex-wrap gap-2;
+}
+
+.modal-labels-empty {
+  @apply text-xs text-white/30;
+}
+
+.modal-label-chip {
+  @apply text-xs font-medium text-white/80 border rounded-full px-3 py-1 transition-all hover:brightness-125;
+}
+
+.modal-label-chip-on {
+  @apply text-white shadow-md;
+}
+
+.modal-label-form {
+  @apply flex items-center gap-2;
+}
+
+.modal-color-input {
+  @apply w-8 h-8 rounded-lg bg-transparent border border-white/10 cursor-pointer p-0.5;
+}
+
+.modal-label-name {
+  @apply flex-1 min-w-0;
+}

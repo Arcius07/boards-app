@@ -1,6 +1,20 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Grid3x3, ArrowLeft, Plus, MessageSquare, GripVertical, Paperclip, FileText, X, Loader2, Trash2} from "lucide-react";
+import {
+  Grid3x3,
+  ArrowLeft,
+  Plus,
+  MessageSquare,
+  Paperclip,
+  FileText,
+  Loader2,
+  Trash2,
+  Calendar,
+  Tag,
+  User,
+} from "lucide-react";
+import { io } from "socket.io-client";
+import useAuthStore from "../store/authStore";
 import {
   DndContext,
   closestCorners,
@@ -16,10 +30,6 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-
-import { io } from "socket.io-client";
-import useAuthStore from "../store/authStore";
-
 import api from "../api/client";
 import "../style/BoardView.css";
 
@@ -32,8 +42,90 @@ function DroppableList({ listId, children }) {
   );
 }
 
-function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAttachment, onDeleteAttachment }) {
-  
+function SortableCard({ card, onClick }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: card.id, data: { type: "card", card } });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  const labels = card.labels || [];
+  const due = card.dueDate ? new Date(card.dueDate) : null;
+  const overdue = due && due < new Date(new Date().setHours(0, 0, 0, 0));
+  const dueText = due
+    ? due.toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })
+    : "";
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="board-card"
+      {...attributes}
+      {...listeners}
+      onClick={() => onClick(card)}
+    >
+      {labels.length > 0 && (
+        <div className="board-card-labels">
+          {labels.map((cl) => (
+            <span
+              key={cl.labelId}
+              className="board-card-label-bar"
+              style={{ background: cl.label.color }}
+              title={cl.label.name}
+            />
+          ))}
+        </div>
+      )}
+      <div className="board-card-title">{card.title}</div>
+      <div className="board-card-footer">
+        <span className="board-card-meta">
+          <MessageSquare size={12} /> {card.comments?.length || 0}
+        </span>
+        {card.attachments?.length > 0 && (
+          <span className="board-card-meta">
+            <Paperclip size={12} /> {card.attachments.length}
+          </span>
+        )}
+        {due && (
+          <span className={overdue ? "board-card-due board-card-due-overdue" : "board-card-due"}>
+            <Calendar size={12} /> {dueText}
+          </span>
+        )}
+        {card.assignee &&
+          (card.assignee.avatarUrl ? (
+            <img
+              src={card.assignee.avatarUrl}
+              alt=""
+              className="board-card-assignee"
+              title={card.assignee.name}
+            />
+          ) : (
+            <span className="board-card-assignee" title={card.assignee.name}>
+              {card.assignee.name.charAt(0).toUpperCase()}
+            </span>
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function CardDetailModal({
+  card,
+  isAdmin,
+  members,
+  boardLabels,
+  onClose,
+  onSave,
+  onAddComment,
+  onAddAttachment,
+  onDeleteAttachment,
+  onToggleLabel,
+  onCreateLabel,
+}) {
   const currentUser = useAuthStore((state) => state.user);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -43,7 +135,8 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
-  const [myRole, setMyRole] = useState("member");
+  const [newLabelName, setNewLabelName] = useState("");
+  const [newLabelColor, setNewLabelColor] = useState("#6366f1");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -76,6 +169,22 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
     setCommentText("");
   }
 
+  function handleAssigneeChange(e) {
+    onSave(card.id, { assigneeId: e.target.value || null });
+  }
+
+  function handleDueChange(e) {
+    const v = e.target.value;
+    onSave(card.id, { dueDate: v ? `${v}T00:00:00.000Z` : null });
+  }
+
+  function handleCreateLabelSubmit(e) {
+    e.preventDefault();
+    if (!newLabelName.trim()) return;
+    onCreateLabel(newLabelName.trim(), newLabelColor);
+    setNewLabelName("");
+  }
+
   function handleAttachClick() {
     fileInputRef.current?.click();
   }
@@ -102,7 +211,7 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
 
     try {
       const signRes = await api.post("/uploads/sign", { type: "attachment" });
-      const { signature, timestamp, cloudName, apiKey, folder, allowedFormats } = signRes.data;
+      const { signature, timestamp, cloudName, apiKey, folder } = signRes.data;
 
       const formData = new FormData();
       formData.append("file", file);
@@ -110,7 +219,6 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
       formData.append("timestamp", timestamp);
       formData.append("api_key", apiKey);
       formData.append("folder", folder);
-      formData.append("allowed_formats", allowedFormats);
 
       const resourceType = isPdf ? "raw" : "image";
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
@@ -157,6 +265,7 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
 
   const comments = card.comments || [];
   const attachments = card.attachments || [];
+  const attachedLabelIds = new Set((card.labels || []).map((cl) => cl.labelId));
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -201,16 +310,87 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
           )}
         </div>
 
+        <div className="modal-details">
+          <div className="modal-detail-row">
+            <div className="modal-detail-label">
+              <User size={13} /> Assignee
+            </div>
+            <select
+              className="modal-select"
+              value={card.assigneeId || ""}
+              onChange={handleAssigneeChange}
+            >
+              <option value="">Unassigned</option>
+              {members.map((m) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.user.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="modal-detail-row">
+            <div className="modal-detail-label">
+              <Calendar size={13} /> Due date
+            </div>
+            <input
+              type="date"
+              className="modal-select"
+              value={card.dueDate ? card.dueDate.slice(0, 10) : ""}
+              onChange={handleDueChange}
+            />
+          </div>
+
+          <div className="modal-detail-row modal-detail-row-top">
+            <div className="modal-detail-label">
+              <Tag size={13} /> Labels
+            </div>
+            <div className="modal-labels-wrap">
+              <div className="modal-labels-list">
+                {boardLabels.length === 0 && (
+                  <span className="modal-labels-empty">No labels yet. Create one below.</span>
+                )}
+                {boardLabels.map((l) => {
+                  const on = attachedLabelIds.has(l.id);
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      className={on ? "modal-label-chip modal-label-chip-on" : "modal-label-chip"}
+                      style={{ background: on ? l.color : "transparent", borderColor: l.color }}
+                      onClick={() => onToggleLabel(card.id, l.id, on)}
+                    >
+                      {l.name}
+                    </button>
+                  );
+                })}
+              </div>
+              <form onSubmit={handleCreateLabelSubmit} className="modal-label-form">
+                <input
+                  type="color"
+                  className="modal-color-input"
+                  value={newLabelColor}
+                  onChange={(e) => setNewLabelColor(e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="modal-select modal-label-name"
+                  placeholder="New label..."
+                  value={newLabelName}
+                  onChange={(e) => setNewLabelName(e.target.value)}
+                />
+                <button type="submit" className="modal-attach-btn">
+                  Create
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
         <div className="modal-attachments-section">
           <div className="modal-attachments-heading-row">
-            <h3 className="modal-attachments-heading">
-              Attachments ({attachments.length})
-            </h3>
-            <button
-              className="modal-attach-btn"
-              onClick={handleAttachClick}
-              disabled={uploading}
-            >
+            <h3 className="modal-attachments-heading">Attachments ({attachments.length})</h3>
+            <button className="modal-attach-btn" onClick={handleAttachClick} disabled={uploading}>
               {uploading ? (
                 <Loader2 size={13} className="modal-spinner" />
               ) : (
@@ -301,33 +481,6 @@ function CardDetailModal({ card,isAdmin,onClose, onSave, onAddComment, onAddAtta
   );
 }
 
-function SortableCard({ card, onClick }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: card.id, data: { type: "card", card } });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="board-card"
-      {...attributes}
-      {...listeners}
-      onClick={() => onClick(card)}
-    >
-      <div className="board-card-title">{card.title}</div>
-      <div className="board-card-footer">
-        <MessageSquare size={12} /> 0
-      </div>
-    </div>
-  );
-}
-
 function BoardView() {
   const { boardId } = useParams();
   const navigate = useNavigate();
@@ -335,128 +488,135 @@ function BoardView() {
   const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [myRole, setMyRole] = useState("member");
+  const [members, setMembers] = useState([]);
 
   const [addingListName, setAddingListName] = useState("");
   const [showAddList, setShowAddList] = useState(false);
   const [addingCardListId, setAddingCardListId] = useState(null);
   const [addingCardTitle, setAddingCardTitle] = useState("");
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [myRole, setMyRole] = useState("member");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
   useEffect(() => {
-  loadBoard();
-}, [boardId]);
+    loadBoard();
+  }, [boardId]);
 
   useEffect(() => {
-  const accessToken = useAuthStore.getState().accessToken;
-  const socket = io("http://localhost:5000", {
-    auth: { token: accessToken },
-  });
+    const accessToken = useAuthStore.getState().accessToken;
+    const socket = io("http://localhost:5000", {
+      auth: { token: accessToken },
+    });
 
-  socket.on("connect", () => {
-    socket.emit("join-board", boardId);
-  });
+    socket.on("connect", () => {
+      socket.emit("join-board", boardId);
+    });
 
-  socket.on("card:moved", ({ card }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const listsWithoutCard = prevBoard.lists.map((list) => ({
-        ...list,
-        cards: list.cards.filter((c) => c.id !== card.id),
-      }));
-      const newLists = listsWithoutCard.map((list) => {
-        if (list.id !== card.listId) return list;
-        const newCards = [...list.cards, card].sort((a, b) => a.position - b.position);
-        return { ...list, cards: newCards };
+    socket.on("card:moved", ({ card }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const existing = prevBoard.lists.flatMap((l) => l.cards).find((c) => c.id === card.id);
+        const merged = { ...existing, ...card };
+        const listsWithoutCard = prevBoard.lists.map((list) => ({
+          ...list,
+          cards: list.cards.filter((c) => c.id !== card.id),
+        }));
+        const newLists = listsWithoutCard.map((list) => {
+          if (list.id !== card.listId) return list;
+          const newCards = [...list.cards, merged].sort((a, b) => a.position - b.position);
+          return { ...list, cards: newCards };
+        });
+        return { ...prevBoard, lists: newLists };
       });
-      return { ...prevBoard, lists: newLists };
-    });
-  });
 
-  socket.on("card:created", ({ card }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const alreadyExists = prevBoard.lists.some((list) =>
-        list.cards.some((c) => c.id === card.id)
+      setSelectedCard((prev) => (prev && prev.id === card.id ? { ...prev, ...card } : prev));
+    });
+
+    socket.on("card:created", ({ card }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const alreadyExists = prevBoard.lists.some((list) =>
+          list.cards.some((c) => c.id === card.id)
+        );
+        if (alreadyExists) return prevBoard;
+        const newLists = prevBoard.lists.map((list) =>
+          list.id === card.listId ? { ...list, cards: [...list.cards, card] } : list
+        );
+        return { ...prevBoard, lists: newLists };
+      });
+    });
+
+    socket.on("card:updated", ({ card }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const newLists = prevBoard.lists.map((list) => ({
+          ...list,
+          cards: list.cards.map((c) => (c.id === card.id ? { ...c, ...card } : c)),
+        }));
+        return { ...prevBoard, lists: newLists };
+      });
+
+      setSelectedCard((prev) => (prev && prev.id === card.id ? { ...prev, ...card } : prev));
+    });
+
+    socket.on("comment:created", ({ comment }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const newLists = prevBoard.lists.map((list) => ({
+          ...list,
+          cards: list.cards.map((c) =>
+            c.id === comment.cardId
+              ? { ...c, comments: [...(c.comments || []), comment] }
+              : c
+          ),
+        }));
+        return { ...prevBoard, lists: newLists };
+      });
+
+      setSelectedCard((prevSelected) =>
+        prevSelected && prevSelected.id === comment.cardId
+          ? { ...prevSelected, comments: [...(prevSelected.comments || []), comment] }
+          : prevSelected
       );
-      if (alreadyExists) return prevBoard;
-      const newLists = prevBoard.lists.map((list) =>
-        list.id === card.listId ? { ...list, cards: [...list.cards, card] } : list
+    });
+
+    socket.on("attachment:created", ({ attachment }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const newLists = prevBoard.lists.map((list) => ({
+          ...list,
+          cards: list.cards.map((c) =>
+            c.id === attachment.cardId
+              ? { ...c, attachments: [...(c.attachments || []), attachment] }
+              : c
+          ),
+        }));
+        return { ...prevBoard, lists: newLists };
+      });
+
+      setSelectedCard((prevSelected) =>
+        prevSelected && prevSelected.id === attachment.cardId
+          ? { ...prevSelected, attachments: [...(prevSelected.attachments || []), attachment] }
+          : prevSelected
       );
-      return { ...prevBoard, lists: newLists };
-    });
-  });
-
-  socket.on("card:updated", ({ card }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const newLists = prevBoard.lists.map((list) => ({
-        ...list,
-        cards: list.cards.map((c) => (c.id === card.id ? { ...c, ...card } : c)),
-      }));
-      return { ...prevBoard, lists: newLists };
-    });
-  });
-
-  socket.on("comment:created", ({ comment }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const newLists = prevBoard.lists.map((list) => ({
-        ...list,
-        cards: list.cards.map((c) =>
-          c.id === comment.cardId
-            ? { ...c, comments: [...(c.comments || []), comment] }
-            : c
-        ),
-      }));
-      return { ...prevBoard, lists: newLists };
     });
 
-    setSelectedCard((prevSelected) =>
-      prevSelected && prevSelected.id === comment.cardId
-        ? { ...prevSelected, comments: [...(prevSelected.comments || []), comment] }
-        : prevSelected
-    );
-  });
-
-  socket.on("attachment:created", ({ attachment }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const newLists = prevBoard.lists.map((list) => ({
-        ...list,
-        cards: list.cards.map((c) =>
-          c.id === attachment.cardId
-            ? { ...c, attachments: [...(c.attachments || []), attachment] }
-            : c
-        ),
-      }));
-      return { ...prevBoard, lists: newLists };
-    });
-
-    setSelectedCard((prevSelected) =>
-      prevSelected && prevSelected.id === attachment.cardId
-        ? { ...prevSelected, attachments: [...(prevSelected.attachments || []), attachment] }
-        : prevSelected
-    );
-  });
-
-  socket.on("attachment:deleted", ({ attachmentId, cardId }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const newLists = prevBoard.lists.map((list) => ({
-        ...list,
-        cards: list.cards.map((c) =>
-          c.id === cardId
-            ? { ...c, attachments: (c.attachments || []).filter((a) => a.id !== attachmentId) }
-            : c
-        ),
-      }));
-      return { ...prevBoard, lists: newLists };
-    });
+    socket.on("attachment:deleted", ({ attachmentId, cardId }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const newLists = prevBoard.lists.map((list) => ({
+          ...list,
+          cards: list.cards.map((c) =>
+            c.id === cardId
+              ? { ...c, attachments: (c.attachments || []).filter((a) => a.id !== attachmentId) }
+              : c
+          ),
+        }));
+        return { ...prevBoard, lists: newLists };
+      });
 
       setSelectedCard((prevSelected) =>
         prevSelected && prevSelected.id === cardId
@@ -468,20 +628,35 @@ function BoardView() {
       );
     });
 
-
-  socket.on("list:created", ({ list }) => {
-    setBoard((prevBoard) => {
-      if (!prevBoard) return prevBoard;
-      const alreadyExists = prevBoard.lists.some((l) => l.id === list.id);
-      if (alreadyExists) return prevBoard;
-      return { ...prevBoard, lists: [...prevBoard.lists, list] };
+    socket.on("label:created", ({ label }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        if ((prevBoard.labels || []).some((l) => l.id === label.id)) return prevBoard;
+        return { ...prevBoard, labels: [...(prevBoard.labels || []), label] };
+      });
     });
-  });
 
-  return () => {
-    socket.disconnect();
-  };
-}, [boardId]);
+    socket.on("list:created", ({ list }) => {
+      setBoard((prevBoard) => {
+        if (!prevBoard) return prevBoard;
+        const alreadyExists = prevBoard.lists.some((l) => l.id === list.id);
+        if (alreadyExists) return prevBoard;
+        return { ...prevBoard, lists: [...prevBoard.lists, list] };
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [boardId]);
+
+  useEffect(() => {
+    if (!board?.workspaceId) return;
+    api
+      .get(`/workspaces/${board.workspaceId}/members`)
+      .then((res) => setMembers(res.data.members))
+      .catch(() => {});
+  }, [board?.workspaceId]);
 
   async function loadBoard() {
     setLoading(true);
@@ -530,7 +705,6 @@ function BoardView() {
       newDestCards = arrayMove(destList.cards, sourceIndex, overIndex);
       destIndex = newDestCards.findIndex((c) => c.id === activeCardId);
     } else {
-      // Moving to a different list
       const destCards = destList.cards.filter((c) => c.id !== activeCardId);
       destIndex = overIsCard ? destCards.findIndex((c) => c.id === over.id) : destCards.length;
       if (destIndex === -1) destIndex = destCards.length;
@@ -588,7 +762,10 @@ function BoardView() {
     if (!addingListName.trim()) return;
     try {
       const res = await api.post(`/boards/${boardId}/lists`, { name: addingListName });
-      setBoard({ ...board, lists: [...board.lists, res.data.list] });
+      setBoard((prev) => {
+        if (prev.lists.some((l) => l.id === res.data.list.id)) return prev;
+        return { ...prev, lists: [...prev.lists, res.data.list] };
+      });
       setAddingListName("");
       setShowAddList(false);
     } catch (err) {
@@ -601,11 +778,15 @@ function BoardView() {
     if (!addingCardTitle.trim()) return;
     try {
       const res = await api.post(`/lists/${listId}/cards`, { title: addingCardTitle });
-      setBoard({
-        ...board,
-        lists: board.lists.map((list) =>
-          list.id === listId ? { ...list, cards: [...list.cards, res.data.card] } : list
-        ),
+      setBoard((prev) => {
+        const exists = prev.lists.some((l) => l.cards.some((c) => c.id === res.data.card.id));
+        if (exists) return prev;
+        return {
+          ...prev,
+          lists: prev.lists.map((list) =>
+            list.id === listId ? { ...list, cards: [...list.cards, res.data.card] } : list
+          ),
+        };
       });
       setAddingCardTitle("");
       setAddingCardListId(null);
@@ -616,17 +797,29 @@ function BoardView() {
 
   async function handleSaveCard(cardId, updates) {
     try {
-      const res = await api.patch(`/cards/${cardId}`, updates);
-      setBoard((prevBoard) => ({
-        ...prevBoard,
-        lists: prevBoard.lists.map((list) => ({
-          ...list,
-          cards: list.cards.map((c) => (c.id === cardId ? res.data.card : c)),
-        })),
-      }));
-      setSelectedCard(res.data.card);
+      await api.patch(`/cards/${cardId}`, updates);
     } catch (err) {
-      setError("Failed to save card");
+      setError(err.response?.data?.error || "Failed to save card");
+    }
+  }
+
+  async function handleToggleLabel(cardId, labelId, isOn) {
+    try {
+      if (isOn) {
+        await api.delete(`/cards/${cardId}/labels/${labelId}`);
+      } else {
+        await api.post(`/cards/${cardId}/labels`, { labelId });
+      }
+    } catch (err) {
+      setError("Failed to update label");
+    }
+  }
+
+  async function handleCreateLabel(name, color) {
+    try {
+      await api.post(`/boards/${boardId}/labels`, { name, color });
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to create label");
     }
   }
 
@@ -634,7 +827,7 @@ function BoardView() {
     try {
       await api.post(`/cards/${cardId}/comments`, { text });
     } catch (err) {
-      setError("Failed to add comment");
+      setError("Failed to post comment");
     }
   }
 
@@ -712,7 +905,9 @@ function BoardView() {
                     className="board-add-input"
                   />
                   <div className="board-add-actions">
-                    <button type="submit" className="board-add-confirm">Add</button>
+                    <button type="submit" className="board-add-confirm">
+                      Add
+                    </button>
                     <button
                       type="button"
                       className="board-add-cancel"
@@ -748,7 +943,9 @@ function BoardView() {
                   className="board-add-input"
                 />
                 <div className="board-add-actions">
-                  <button type="submit" className="board-add-confirm">Add</button>
+                  <button type="submit" className="board-add-confirm">
+                    Add
+                  </button>
                   <button
                     type="button"
                     className="board-add-cancel"
@@ -769,14 +966,19 @@ function BoardView() {
           </div>
         </div>
       </DndContext>
+
       <CardDetailModal
         card={selectedCard}
         isAdmin={myRole === "admin"}
+        members={members}
+        boardLabels={board.labels || []}
         onClose={() => setSelectedCard(null)}
         onSave={handleSaveCard}
         onAddComment={handleAddComment}
         onAddAttachment={handleAddAttachment}
         onDeleteAttachment={handleDeleteAttachment}
+        onToggleLabel={handleToggleLabel}
+        onCreateLabel={handleCreateLabel}
       />
     </div>
   );
