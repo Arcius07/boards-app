@@ -48,7 +48,7 @@ const uploadRoutes = require("./routes/upload.routes");
 app.use("/uploads", uploadRoutes);
 
 const httpServer = http.createServer(app);
-initSocket(httpServer);
+initSocket(httpServer, prisma);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));

@@ -1,6 +1,7 @@
 const express = require("express");
 const { z } = require("zod");
 const requireAuth = require("../middleware/auth");
+const requireBoardAccess = require("../middleware/boardAccess");
 const { getIO } = require("../sockets/io");
 
 const router = express.Router();
@@ -15,13 +16,13 @@ const updateCardSchema = z.object({
 });
 
 module.exports = (prisma) => {
-  router.patch("/:id", requireAuth, async (req, res) => {
+  router.patch("/:id", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = updateCardSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
     }
 
-    const { listId, boardId, position, title, description } = parsed.data;
+    const { listId, position, title, description } = parsed.data;
 
     if (
       listId === undefined &&
@@ -32,33 +33,36 @@ module.exports = (prisma) => {
       return res.status(400).json({ error: "No fields provided to update" });
     }
 
-    const dataToUpdate = {};
-    if (listId !== undefined) dataToUpdate.listId = listId;
-    if (position !== undefined) dataToUpdate.position = position;
-    if (title !== undefined) dataToUpdate.title = title;
-    if (description !== undefined) dataToUpdate.description = description;
-
     try {
+      if (listId !== undefined) {
+        const destList = await prisma.list.findUnique({
+          where: { id: listId },
+          select: { boardId: true },
+        });
+        if (!destList || destList.boardId !== req.boardId) {
+          return res.status(400).json({ error: "Invalid destination list" });
+        }
+      }
+
+      const dataToUpdate = {};
+      if (listId !== undefined) dataToUpdate.listId = listId;
+      if (position !== undefined) dataToUpdate.position = position;
+      if (title !== undefined) dataToUpdate.title = title;
+      if (description !== undefined) dataToUpdate.description = description;
+
       const card = await prisma.card.update({
         where: { id: req.params.id },
         data: dataToUpdate,
       });
 
       const isMove = listId !== undefined || position !== undefined;
-      const io = getIO();
-
-      if (isMove) {
-        if (!boardId) {
-          return res.status(400).json({ error: "boardId is required when moving a card" });
-        }
-        io.to(`board:${boardId}`).emit("card:moved", { card });
-      } else {
-        const list = await prisma.list.findUnique({ where: { id: card.listId } });
-        io.to(`board:${list.boardId}`).emit("card:updated", { card });
-      }
+      getIO()
+        .to(`board:${req.boardId}`)
+        .emit(isMove ? "card:moved" : "card:updated", { card });
 
       res.json({ card });
     } catch (err) {
+      console.error("Update card failed:", err);
       res.status(500).json({ error: "Failed to update card" });
     }
   });
@@ -67,7 +71,7 @@ module.exports = (prisma) => {
     text: z.string().min(1),
   });
 
-  router.post("/:id/comments", requireAuth, async (req, res) => {
+  router.post("/:id/comments", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = createCommentSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: parsed.error.issues[0].message });
@@ -96,7 +100,7 @@ module.exports = (prisma) => {
     } catch (err) {
       res.status(500).json({ error: "Failed to create comment" });
     }
-});
+  });
 
   const createAttachmentSchema = z.object({
     url: z.string().min(1),
@@ -150,7 +154,7 @@ module.exports = (prisma) => {
         return res.status(404).json({ error: "Attachment not found" });
       }
 
-      if (attachment.uploadedBy !== req.userId) {
+      if (attachment.uploadedBy !== req.userId && req.membership.role !== "admin") {
         return res.status(403).json({ error: "You can only delete your own attachments" });
       }
 

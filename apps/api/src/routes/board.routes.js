@@ -1,6 +1,7 @@
 const express = require("express");
 const { z } = require("zod");
 const requireAuth = require("../middleware/auth");
+const requireBoardAccess = require("../middleware/boardAccess");
 
 const { getIO } = require("../sockets/io");
 
@@ -15,7 +16,7 @@ const createCardSchema = z.object({
 });
 
 module.exports = (prisma) => {
-  router.get("/:id", requireAuth, async (req, res) => {
+  router.get("/:id", requireAuth, requireBoardAccess(prisma, "board"), async (req, res) => {
     try {
       const board = await prisma.board.findUnique({
       where: { id: req.params.id },
@@ -59,7 +60,7 @@ module.exports = (prisma) => {
     }
   });
 
-    router.post("/:id/lists", requireAuth, async (req, res) => {
+  router.post("/:id/lists", requireAuth, requireBoardAccess(prisma, "board"), async (req, res) => {
       const parsed = createListSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.issues[0].message });
@@ -87,7 +88,7 @@ module.exports = (prisma) => {
       } catch (err) {
         res.status(500).json({ error: "Failed to create list" });
       }
-    });
+  });
 
   return router;
 };

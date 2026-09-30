@@ -171,3 +171,11 @@
 .dashboard-modal-submit {
   @apply bg-indigo-600 hover:bg-indigo-500 transition rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50;
 }
+
+.dashboard-workspace-select {
+  @apply bg-transparent text-inherit outline-none cursor-pointer;
+}
+
+.dashboard-workspace-select option {
+  @apply bg-[#0b0e1a] text-white;
+}

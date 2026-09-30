@@ -80,6 +80,13 @@ function Dashboard() {
     clearAuth();
     navigate("/login");
   }
+    function handleSwitchWorkspace(e) {
+    const ws = workspaces.find((w) => w.id === e.target.value);
+    if (!ws) return;
+    setCurrentWorkspace(ws);
+    setError("");
+    loadBoards(ws.id);
+  }
 
   if (loading) {
     return <div className="dashboard-loading">Loading your workspace...</div>;
@@ -100,14 +107,31 @@ function Dashboard() {
           <div className="dashboard-workspace-avatar">
             {currentWorkspace?.name?.[0] || "W"}
           </div>
-          {currentWorkspace?.name || "Workspace"}
-          <ChevronDown size={14} />
+          <select
+            className="dashboard-workspace-select"
+            value={currentWorkspace?.id || ""}
+            onChange={handleSwitchWorkspace}
+          >
+            {workspaces.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="dashboard-nav-tabs">
           <span className="dashboard-nav-tab dashboard-nav-tab-active">Boards</span>
           <span className="dashboard-nav-tab">Analytics</span>
-          <span className="dashboard-nav-tab">Members</span>
+          <span
+            className="dashboard-nav-tab"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              currentWorkspace && navigate(`/workspace/${currentWorkspace.id}/settings`)
+            }
+          >
+            Members
+          </span>
           <span className="dashboard-nav-tab">Activity</span>
         </div>
 

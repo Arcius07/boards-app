@@ -1,6 +1,7 @@
 const express = require("express");
 const { z } = require("zod");
 const requireAuth = require("../middleware/auth");
+const requireBoardAccess = require("../middleware/boardAccess");
 
 const { getIO } = require("../sockets/io");
 
@@ -12,7 +13,7 @@ const createCardSchema = z.object({
 
 module.exports = (prisma) => {
   // POST /lists/:id/cards — create a new card
-    router.post("/:id/cards", requireAuth, async (req, res) => {
+    router.post("/:id/cards", requireAuth, requireBoardAccess(prisma, "list"), async (req, res) => {
       const parsed = createCardSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: parsed.error.issues[0].message });

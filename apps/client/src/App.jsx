@@ -19,6 +19,9 @@ import BoardView from "./pages/BoardView";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import WorkspaceSettings from "./pages/WorkspaceSettings";
+
+
 
 import { useEffect, useState } from "react";
 import api from "./api/client";
@@ -137,6 +140,10 @@ function App() {
         <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
         <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+        <Route
+          path="/workspace/:workspaceId/settings"
+          element={<RequireAuth><WorkspaceSettings /></RequireAuth>}
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,0 +1,101 @@
+@reference "tailwindcss";
+
+.ws-page {
+  @apply min-h-screen bg-[#05070f] text-white px-6 py-10;
+}
+
+.ws-container {
+  @apply max-w-3xl mx-auto flex flex-col gap-6;
+}
+
+.ws-header {
+  @apply flex items-center gap-4;
+}
+
+.ws-back-btn {
+  @apply w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors;
+}
+
+.ws-title {
+  @apply text-2xl font-bold tracking-tight;
+}
+
+.ws-subtitle {
+  @apply text-sm text-white/40;
+}
+
+.ws-card {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6;
+}
+
+.ws-card-title {
+  @apply text-sm font-semibold text-white/80 mb-4;
+}
+
+.ws-row-form {
+  @apply flex gap-3 flex-wrap;
+}
+
+.ws-input {
+  @apply flex-1 min-w-[200px] bg-black/30 border border-white/10 focus:border-indigo-400/60 outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 transition-colors;
+}
+
+.ws-input:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.ws-select {
+  @apply bg-black/30 border border-white/10 focus:border-indigo-400/60 outline-none rounded-xl px-3 py-2.5 text-sm text-white;
+}
+
+.ws-btn-primary {
+  @apply inline-flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-400 disabled:opacity-50 text-white text-sm font-medium rounded-xl px-5 py-2.5 transition-colors;
+}
+
+.ws-btn-danger {
+  @apply inline-flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 text-sm font-medium rounded-xl px-5 py-2.5 transition-colors;
+}
+
+.ws-error {
+  @apply mt-3 text-sm text-red-300 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2;
+}
+
+.ws-member-list {
+  @apply flex flex-col divide-y divide-white/5;
+}
+
+.ws-member {
+  @apply flex items-center gap-3 py-3;
+}
+
+.ws-avatar {
+  @apply w-10 h-10 rounded-full object-cover shrink-0 bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center font-semibold text-sm;
+}
+
+.ws-member-info {
+  @apply flex-1 min-w-0;
+}
+
+.ws-member-name {
+  @apply text-sm font-medium truncate flex items-center gap-2;
+}
+
+.ws-member-email {
+  @apply text-xs text-white/40 truncate;
+}
+
+.ws-badge-owner {
+  @apply text-[10px] font-bold tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5;
+}
+
+.ws-badge-role {
+  @apply text-xs text-white/60 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 capitalize;
+}
+
+.ws-remove-btn {
+  @apply p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors;
+}
+
+.ws-loading {
+  @apply min-h-screen bg-[#05070f] text-white/60 flex items-center justify-center;
+}

@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 
 let ioInstance = null;
 
-function initSocket(httpServer) {
+function initSocket(httpServer, prisma) {
   const io = new Server(httpServer, {
     cors: {
       origin: "http://localhost:5173",
@@ -28,9 +28,29 @@ function initSocket(httpServer) {
     io.on("connection", (socket) => {
         console.log(`Socket connected: ${socket.id} (user ${socket.userId})`);
 
-        socket.on("join-board", (boardId) => {
-        socket.join(`board:${boardId}`);
-        console.log(`Socket ${socket.id} joined board:${boardId}`);
+        socket.on("join-board", async (boardId) => {
+          try {
+            const board = await prisma.board.findUnique({
+              where: { id: boardId },
+              select: { workspaceId: true },
+            });
+            if (!board) return;
+
+            const membership = await prisma.workspaceMember.findUnique({
+              where: {
+                workspaceId_userId: { workspaceId: board.workspaceId, userId: socket.userId },
+              },
+            });
+            if (!membership) {
+              console.log(`Socket ${socket.id} denied board:${boardId}`);
+              return;
+            }
+
+            socket.join(`board:${boardId}`);
+            console.log(`Socket ${socket.id} joined board:${boardId}`);
+          } catch (err) {
+            console.error("join-board failed:", err);
+          }
         });
 
         socket.on("disconnect", () => {
