@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, useLocation, Navigate  } from "react-router-dom";
 import {
   Menu,
   X,
@@ -126,7 +126,10 @@ function App() {
       <DevSidebar />
 
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route
+          path="/"
+          element={accessToken ? <Navigate to="/dashboard" replace /> : <Landing />}
+        />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />

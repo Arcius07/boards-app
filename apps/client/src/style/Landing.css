@@ -1,0 +1,211 @@
+@reference "tailwindcss";
+
+.landing-page {
+  @apply relative min-h-screen bg-[#05070f] text-white overflow-x-hidden;
+}
+
+.landing-glow-a {
+  @apply absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full bg-indigo-600/20 blur-3xl pointer-events-none;
+}
+
+.landing-glow-b {
+  @apply absolute top-[500px] -right-40 w-[500px] h-[500px] rounded-full bg-violet-600/10 blur-3xl pointer-events-none;
+}
+
+/* NAV */
+.landing-nav {
+  @apply relative z-10 max-w-6xl mx-auto flex items-center justify-between px-6 py-6;
+}
+
+.landing-logo {
+  @apply flex items-center gap-2.5 text-lg font-semibold tracking-tight;
+}
+
+.landing-logo-icon {
+  @apply w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30;
+}
+
+.landing-nav-actions {
+  @apply flex items-center gap-3;
+}
+
+.landing-nav-link {
+  @apply text-sm text-white/60 hover:text-white transition-colors px-3 py-2;
+}
+
+.landing-btn-primary {
+  @apply inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium rounded-xl px-5 py-2.5 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all;
+}
+
+.landing-btn-ghost {
+  @apply inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-sm font-medium rounded-xl px-5 py-2.5 transition-all;
+}
+
+/* HERO */
+.landing-hero {
+  @apply relative z-10 max-w-4xl mx-auto text-center px-6 pt-16 pb-10;
+}
+
+.landing-badge {
+  @apply inline-flex items-center gap-2 text-xs font-medium text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-3.5 py-1.5 mb-8;
+}
+
+.landing-badge-dot {
+  @apply w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse;
+}
+
+.landing-title {
+  @apply text-5xl md:text-7xl font-bold tracking-tight leading-[1.05];
+}
+
+.landing-title-gradient {
+  @apply bg-gradient-to-r from-indigo-400 via-violet-400 to-sky-400 bg-clip-text text-transparent;
+}
+
+.landing-subtitle {
+  @apply mt-6 text-lg md:text-xl text-white/50 max-w-2xl mx-auto leading-relaxed;
+}
+
+.landing-cta-row {
+  @apply mt-10 flex items-center justify-center gap-4 flex-wrap;
+}
+
+/* MOCK BOARD */
+.landing-preview-wrap {
+  @apply relative z-10 max-w-5xl mx-auto px-6 pb-24 pt-10;
+}
+
+.landing-preview {
+  @apply relative rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-5 shadow-2xl shadow-indigo-500/10;
+  animation: landing-float 7s ease-in-out infinite;
+}
+
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.landing-preview-bar {
+  @apply flex items-center gap-2 mb-5;
+}
+
+.landing-preview-dot {
+  @apply w-2.5 h-2.5 rounded-full bg-white/15;
+}
+
+.landing-preview-title {
+  @apply ml-3 text-xs text-white/40 font-medium;
+}
+
+.landing-preview-cols {
+  @apply grid grid-cols-1 sm:grid-cols-3 gap-4;
+}
+
+.landing-preview-col {
+  @apply rounded-xl bg-black/30 border border-white/5 p-3 flex flex-col gap-2.5;
+}
+
+.landing-preview-col-title {
+  @apply flex items-center justify-between text-xs font-semibold text-white/60 px-1 pb-1;
+}
+
+.landing-preview-card {
+  @apply rounded-lg bg-white/[0.06] border border-white/10 px-3 py-2.5 text-sm text-white/80;
+}
+
+.landing-preview-card-active {
+  @apply rounded-lg bg-indigo-500/15 border border-indigo-400/40 px-3 py-2.5 text-sm text-white shadow-lg shadow-indigo-500/20 rotate-2 translate-x-2;
+}
+
+.landing-preview-card-meta {
+  @apply mt-2 flex items-center gap-1.5 text-[11px] text-white/40;
+}
+
+.landing-live-chip {
+  @apply absolute -top-3 right-8 flex items-center gap-2 text-[11px] font-medium text-emerald-300 bg-[#0b0e1a] border border-emerald-500/30 rounded-full px-3 py-1.5 shadow-lg;
+}
+
+/* SECTIONS */
+.landing-section {
+  @apply relative z-10 max-w-6xl mx-auto px-6 py-20;
+}
+
+.landing-section-eyebrow {
+  @apply text-center text-xs font-semibold tracking-widest text-indigo-400 uppercase mb-3;
+}
+
+.landing-section-title {
+  @apply text-center text-3xl md:text-4xl font-bold tracking-tight;
+}
+
+.landing-section-sub {
+  @apply text-center text-white/50 mt-4 max-w-xl mx-auto;
+}
+
+/* FEATURES */
+.landing-features-grid {
+  @apply mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5;
+}
+
+.landing-feature-card {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:bg-white/[0.06] hover:border-indigo-400/30 hover:-translate-y-1 transition-all duration-300;
+}
+
+.landing-feature-icon {
+  @apply w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 flex items-center justify-center mb-4;
+}
+
+.landing-feature-title {
+  @apply text-base font-semibold mb-2;
+}
+
+.landing-feature-text {
+  @apply text-sm text-white/50 leading-relaxed;
+}
+
+/* STEPS */
+.landing-steps {
+  @apply mt-14 grid grid-cols-1 md:grid-cols-3 gap-8;
+}
+
+.landing-step {
+  @apply text-center;
+}
+
+.landing-step-num {
+  @apply mx-auto w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center font-bold mb-4 shadow-lg shadow-indigo-500/30;
+}
+
+.landing-step-title {
+  @apply font-semibold mb-1.5;
+}
+
+.landing-step-text {
+  @apply text-sm text-white/50;
+}
+
+/* FINAL CTA */
+.landing-final {
+  @apply relative z-10 max-w-4xl mx-auto px-6 pb-24;
+}
+
+.landing-final-card {
+  @apply rounded-3xl border border-indigo-400/20 bg-gradient-to-br from-indigo-500/15 via-violet-500/10 to-transparent p-12 text-center;
+}
+
+.landing-final-title {
+  @apply text-3xl md:text-4xl font-bold tracking-tight;
+}
+
+.landing-final-text {
+  @apply mt-3 text-white/50;
+}
+
+/* FOOTER */
+.landing-footer {
+  @apply relative z-10 max-w-6xl mx-auto px-6 py-8 border-t border-white/10 flex items-center justify-between text-sm text-white/40 flex-wrap gap-3;
+}
+
+.landing-footer-link {
+  @apply hover:text-white transition-colors;
+}
