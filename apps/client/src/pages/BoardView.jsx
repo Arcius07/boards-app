@@ -117,6 +117,7 @@ function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment,
 
       await onAddAttachment(card.id, {
         url: cloudinaryData.secure_url,
+        publicId: cloudinaryData.public_id,
         filename: file.name,
         fileType: isPdf ? "pdf" : "image",
       });

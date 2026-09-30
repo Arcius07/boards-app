@@ -126,6 +126,7 @@ model Attachment {
   filename   String
   fileType   String
   uploadedBy String
+  publicId   String?
   createdAt  DateTime @default(now())
 
   card Card @relation(fields: [cardId], references: [id])

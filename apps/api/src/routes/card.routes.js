@@ -4,6 +4,7 @@ const requireAuth = require("../middleware/auth");
 const { getIO } = require("../sockets/io");
 
 const router = express.Router();
+const cloudinary = require("cloudinary").v2;
 
 const updateCardSchema = z.object({
   listId: z.string().optional(),
@@ -101,6 +102,7 @@ module.exports = (prisma) => {
     url: z.string().min(1),
     filename: z.string().min(1),
     fileType: z.enum(["image", "pdf"]),
+    publicId: z.string().optional(),
   });
 
   router.post("/:id/attachments", requireAuth, async (req, res) => {
@@ -117,6 +119,7 @@ module.exports = (prisma) => {
           filename: parsed.data.filename,
           fileType: parsed.data.fileType,
           uploadedBy: req.userId,
+          publicId: parsed.data.publicId,
         },
         include: {
           user: {
@@ -132,6 +135,7 @@ module.exports = (prisma) => {
 
       res.status(201).json({ attachment });
     } catch (err) {
+      console.error("Create attachment failed:", err);
       res.status(500).json({ error: "Failed to create attachment" });
     }
   });
@@ -151,6 +155,16 @@ module.exports = (prisma) => {
       }
 
       await prisma.attachment.delete({ where: { id: attachment.id } });
+
+      if (attachment.publicId) {
+        try {
+          await cloudinary.uploader.destroy(attachment.publicId, {
+            resource_type: attachment.fileType === "pdf" ? "raw" : "image",
+          });
+        } catch (cloudErr) {
+          console.error("Cloudinary cleanup failed for", attachment.publicId, cloudErr);
+        }
+      }
 
       const card = await prisma.card.findUnique({ where: { id: attachment.cardId } });
       const list = await prisma.list.findUnique({ where: { id: card.listId } });
