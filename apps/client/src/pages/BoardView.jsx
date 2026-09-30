@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Grid3x3, ArrowLeft, Plus, MessageSquare, GripVertical, Paperclip, FileText, X, Loader2 } from "lucide-react";
+import { Grid3x3, ArrowLeft, Plus, MessageSquare, GripVertical, Paperclip, FileText, X, Loader2, Trash2} from "lucide-react";
 import {
   DndContext,
   closestCorners,
@@ -32,7 +32,9 @@ function DroppableList({ listId, children }) {
   );
 }
 
-function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment }) {
+function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment, onDeleteAttachment }) {
+  
+  const currentUser = useAuthStore((state) => state.user);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -246,6 +248,21 @@ function CardDetailModal({ card, onClose, onSave, onAddComment, onAddAttachment 
                     <div className="modal-attachment-name">{att.filename}</div>
                     <div className="modal-attachment-uploader">by {att.user.name}</div>
                   </div>
+                  {att.uploadedBy === currentUser?.id && (
+                    <button
+                      className="modal-attachment-delete"
+                      title="Delete attachment"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (window.confirm(`Delete "${att.filename}"?`)) {
+                          onDeleteAttachment(card.id, att.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </a>
               ))}
             </div>
@@ -424,6 +441,30 @@ function BoardView() {
     );
   });
 
+  socket.on("attachment:deleted", ({ attachmentId, cardId }) => {
+    setBoard((prevBoard) => {
+      if (!prevBoard) return prevBoard;
+      const newLists = prevBoard.lists.map((list) => ({
+        ...list,
+        cards: list.cards.map((c) =>
+          c.id === cardId
+            ? { ...c, attachments: (c.attachments || []).filter((a) => a.id !== attachmentId) }
+            : c
+        ),
+      }));
+      return { ...prevBoard, lists: newLists };
+    });
+
+      setSelectedCard((prevSelected) =>
+        prevSelected && prevSelected.id === cardId
+          ? {
+              ...prevSelected,
+              attachments: (prevSelected.attachments || []).filter((a) => a.id !== attachmentId),
+            }
+          : prevSelected
+      );
+    });
+
 
   socket.on("list:created", ({ list }) => {
     setBoard((prevBoard) => {
@@ -601,6 +642,14 @@ function BoardView() {
     }
   }
 
+  async function handleDeleteAttachment(cardId, attachmentId) {
+    try {
+      await api.delete(`/cards/${cardId}/attachments/${attachmentId}`);
+    } catch (err) {
+      setError("Failed to delete attachment");
+    }
+  }
+
   if (loading) {
     return <div className="board-loading">Loading board...</div>;
   }
@@ -722,6 +771,7 @@ function BoardView() {
         onSave={handleSaveCard}
         onAddComment={handleAddComment}
         onAddAttachment={handleAddAttachment}
+        onDeleteAttachment={handleDeleteAttachment}
       />
     </div>
   );

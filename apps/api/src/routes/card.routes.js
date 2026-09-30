@@ -136,5 +136,37 @@ module.exports = (prisma) => {
     }
   });
 
+  router.delete("/:id/attachments/:attachmentId", requireAuth, async (req, res) => {
+    try {
+      const attachment = await prisma.attachment.findUnique({
+        where: { id: req.params.attachmentId },
+      });
+
+      if (!attachment || attachment.cardId !== req.params.id) {
+        return res.status(404).json({ error: "Attachment not found" });
+      }
+
+      if (attachment.uploadedBy !== req.userId) {
+        return res.status(403).json({ error: "You can only delete your own attachments" });
+      }
+
+      await prisma.attachment.delete({ where: { id: attachment.id } });
+
+      const card = await prisma.card.findUnique({ where: { id: attachment.cardId } });
+      const list = await prisma.list.findUnique({ where: { id: card.listId } });
+
+      getIO()
+        .to(`board:${list.boardId}`)
+        .emit("attachment:deleted", {
+          attachmentId: attachment.id,
+          cardId: attachment.cardId,
+        });
+
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to delete attachment" });
+    }
+  });
+
   return router;
 };

@@ -224,3 +224,7 @@
 .modal-attachment-uploader {
   @apply text-xs text-white/40;
 }
+
+.modal-attachment-delete {
+  @apply ml-auto shrink-0 p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-colors;
+}
