@@ -1,5 +1,62 @@
-# Logs
-logs
+# ==========================================
+# Environment variables and secrets
+# ==========================================
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# ==========================================
+# Node.js dependencies
+# ==========================================
+node_modules/
+**/node_modules/
+
+# ==========================================
+# Build outputs
+# ==========================================
+dist/
+**/dist/
+dist-ssr/
+build/
+**/build/
+.next/
+.nuxt/
+out/
+coverage/
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.python-version
+
+# Virtual environments
+venv/
+**/venv/
+.venv/
+**/.venv/
+env/
+**/env/
+ENV/
+
+# Python testing and tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+htmlcov/
+
+# ==========================================
+# Logs and debugging
+# ==========================================
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,20 +64,32 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ==========================================
+# Package managers
+# ==========================================
+.npm/
+.pnpm-store/
 
-# Editor directories and files
+# ==========================================
+# IDEs and editors
+# ==========================================
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.idea/
+*.swp
+*.swo
+*~
 
-/apps/analytics/.env
+# ==========================================
+# Operating system files
+# ==========================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# Local configuration and temporary files
+# ==========================================
+*.local
+*.tmp
+*.bak
