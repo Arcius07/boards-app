@@ -1,0 +1,77 @@
+@reference "tailwindcss";
+
+.an-page {
+  @apply min-h-screen bg-[#05070f] text-white px-6 py-10;
+}
+
+.an-container {
+  @apply max-w-5xl mx-auto flex flex-col gap-6;
+}
+
+.an-header {
+  @apply flex items-center gap-4;
+}
+
+.an-back-btn {
+  @apply w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors;
+}
+
+.an-title {
+  @apply text-2xl font-bold tracking-tight;
+}
+
+.an-subtitle {
+  @apply text-sm text-white/40;
+}
+
+.an-stats {
+  @apply grid grid-cols-1 sm:grid-cols-3 gap-4;
+}
+
+.an-stat {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] p-5;
+}
+
+.an-stat-label {
+  @apply text-xs font-medium text-white/40 uppercase tracking-wider;
+}
+
+.an-stat-value {
+  @apply mt-2 text-3xl font-bold;
+}
+
+.an-stat-danger {
+  @apply text-red-300;
+}
+
+.an-grid {
+  @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+}
+
+.an-card {
+  @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6;
+}
+
+.an-card-wide {
+  @apply lg:col-span-2;
+}
+
+.an-card-title {
+  @apply text-sm font-semibold text-white/80;
+}
+
+.an-card-hint {
+  @apply text-xs text-white/35 mt-1 mb-5;
+}
+
+.an-chart {
+  @apply h-64 w-full;
+}
+
+.an-empty {
+  @apply h-64 flex items-center justify-center text-sm text-white/35 text-center px-6;
+}
+
+.an-loading {
+  @apply min-h-screen bg-[#05070f] text-white/60 flex items-center justify-center px-6 text-center;
+}

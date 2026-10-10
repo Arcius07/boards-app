@@ -29,9 +29,7 @@ const updateCardSchema = z.object({
   dueDate: z.string().datetime().nullable().optional(),
 });
 
-const createCommentSchema = z.object({
-  text: z.string().min(1),
-});
+const createCommentSchema = z.object({ text: z.string().min(1) });
 
 const createAttachmentSchema = z.object({
   url: z.string().min(1),
@@ -43,7 +41,6 @@ const createAttachmentSchema = z.object({
 const attachLabelSchema = z.object({ labelId: z.string() });
 
 module.exports = (prisma) => {
-  // PATCH /cards/:id: partial update (move, edit, assign, due date)
   router.patch("/:id", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = updateCardSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -94,6 +91,9 @@ module.exports = (prisma) => {
       if (fields.dueDate !== undefined) {
         data.dueDate = fields.dueDate === null ? null : new Date(fields.dueDate);
       }
+      if (fields.listId !== undefined && fields.listId !== previousListId) {
+        data.completedAt = destListName === "Done" ? new Date() : null;
+      }
 
       const card = await prisma.card.update({
         where: { id: req.params.id },
@@ -108,7 +108,6 @@ module.exports = (prisma) => {
 
       const name = await actorName(prisma, req.userId);
 
-      // Notification: assigned to someone new (not yourself)
       if (
         fields.assigneeId &&
         fields.assigneeId !== previousAssigneeId &&
@@ -122,7 +121,6 @@ module.exports = (prisma) => {
         });
       }
 
-      // Activity log entries
       if (fields.listId !== undefined && fields.listId !== previousListId) {
         await logActivity(prisma, {
           boardId: req.boardId,
@@ -154,7 +152,6 @@ module.exports = (prisma) => {
     }
   });
 
-  // POST /cards/:id/comments
   router.post("/:id/comments", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = createCommentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -163,14 +160,8 @@ module.exports = (prisma) => {
 
     try {
       const comment = await prisma.comment.create({
-        data: {
-          text: parsed.data.text,
-          cardId: req.params.id,
-          userId: req.userId,
-        },
-        include: {
-          user: { select: { id: true, name: true } },
-        },
+        data: { text: parsed.data.text, cardId: req.params.id, userId: req.userId },
+        include: { user: { select: { id: true, name: true } } },
       });
 
       getIO().to(`board:${req.boardId}`).emit("comment:created", { comment });
@@ -192,7 +183,6 @@ module.exports = (prisma) => {
     }
   });
 
-  // POST /cards/:id/attachments
   router.post("/:id/attachments", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = createAttachmentSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -209,9 +199,7 @@ module.exports = (prisma) => {
           uploadedBy: req.userId,
           publicId: parsed.data.publicId,
         },
-        include: {
-          user: { select: { id: true, name: true } },
-        },
+        include: { user: { select: { id: true, name: true } } },
       });
 
       getIO().to(`board:${req.boardId}`).emit("attachment:created", { attachment });
@@ -233,7 +221,6 @@ module.exports = (prisma) => {
     }
   });
 
-  // DELETE /cards/:id/attachments/:attachmentId
   router.delete(
     "/:id/attachments/:attachmentId",
     requireAuth,
@@ -279,7 +266,6 @@ module.exports = (prisma) => {
     }
   );
 
-  // POST /cards/:id/labels: attach an existing board label to a card
   router.post("/:id/labels", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = attachLabelSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -311,7 +297,6 @@ module.exports = (prisma) => {
     }
   });
 
-  // DELETE /cards/:id/labels/:labelId: detach a label from a card
   router.delete("/:id/labels/:labelId", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     try {
       await prisma.cardLabel.deleteMany({

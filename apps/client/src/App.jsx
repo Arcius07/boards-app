@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, NavLink, useLocation, Navigate  } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, useLocation, Navigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -21,8 +21,6 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import WorkspaceSettings from "./pages/WorkspaceSettings";
 import Activity from "./pages/Activity";
-
-
 
 import { useEffect, useState } from "react";
 import api from "./api/client";
@@ -104,7 +102,6 @@ function DevSidebar() {
 }
 
 function App() {
-
   const accessToken = useAuthStore((state) => state.accessToken);
   const setAuth = useAuthStore((state) => state.setAuth);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -148,6 +145,10 @@ function App() {
         <Route
           path="/workspace/:workspaceId/activity"
           element={<RequireAuth><Activity /></RequireAuth>}
+        />
+        <Route
+          path="/workspace/:workspaceId/analytics"
+          element={<RequireAuth><Analytics /></RequireAuth>}
         />
       </Routes>
     </BrowserRouter>

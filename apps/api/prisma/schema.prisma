@@ -81,6 +81,7 @@ model Card {
   dueDate     DateTime?
   position    Float
   createdAt   DateTime  @default(now())
+  completedAt DateTime?
 
   list     List        @relation(fields: [listId], references: [id])
   assignee User?       @relation("CardAssignee", fields: [assigneeId], references: [id])

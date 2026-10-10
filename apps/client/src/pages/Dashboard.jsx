@@ -4,9 +4,8 @@ import { Grid3x3, Search, Plus, Folder, Users, LogOut } from "lucide-react";
 import api from "../api/client";
 import useAuthStore from "../store/authStore";
 import NotificationBell from "../components/NotificationBell";
-import "../style/Dashboard.css";
 import ActivityList from "../components/ActivityList";
-
+import "../style/Dashboard.css";
 
 const BOARD_COLORS = ["#4338ca", "#15803d", "#b91c1c", "#6d28d9", "#0f766e", "#a16207"];
 
@@ -21,15 +20,14 @@ function Dashboard() {
   const [workspaces, setWorkspaces] = useState([]);
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [boards, setBoards] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
-  const [activity, setActivity] = useState([]);
-
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadWorkspaces();
@@ -91,13 +89,6 @@ function Dashboard() {
     }
   }
 
-  function handleSwitchWorkspace(e) {
-    const ws = workspaces.find((w) => w.id === e.target.value);
-    if (!ws) return;
-    setCurrentWorkspace(ws);
-    setError("");
-    loadBoards(ws.id);
-  }
   async function handleCreateWorkspace(e) {
     e.preventDefault();
     if (!newWorkspaceName.trim()) return;
@@ -115,9 +106,21 @@ function Dashboard() {
     }
   }
 
+  function handleSwitchWorkspace(e) {
+    const ws = workspaces.find((w) => w.id === e.target.value);
+    if (!ws) return;
+    setCurrentWorkspace(ws);
+    setError("");
+    loadBoards(ws.id);
+  }
+
   function handleLogout() {
     clearAuth();
     navigate("/login");
+  }
+
+  function goToWorkspacePage(page) {
+    if (currentWorkspace) navigate(`/workspace/${currentWorkspace.id}/${page}`);
   }
 
   if (loading) {
@@ -126,7 +129,6 @@ function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      {/* Top nav */}
       <nav className="dashboard-nav">
         <div className="dashboard-logo">
           <div className="dashboard-logo-icon">
@@ -161,22 +163,24 @@ function Dashboard() {
 
         <div className="dashboard-nav-tabs">
           <span className="dashboard-nav-tab dashboard-nav-tab-active">Boards</span>
-          <span className="dashboard-nav-tab">Analytics</span>
           <span
             className="dashboard-nav-tab"
             style={{ cursor: "pointer" }}
-            onClick={() =>
-              currentWorkspace && navigate(`/workspace/${currentWorkspace.id}/settings`)
-            }
+            onClick={() => goToWorkspacePage("analytics")}
+          >
+            Analytics
+          </span>
+          <span
+            className="dashboard-nav-tab"
+            style={{ cursor: "pointer" }}
+            onClick={() => goToWorkspacePage("settings")}
           >
             Members
           </span>
           <span
             className="dashboard-nav-tab"
             style={{ cursor: "pointer" }}
-            onClick={() =>
-              currentWorkspace && navigate(`/workspace/${currentWorkspace.id}/activity`)
-            }
+            onClick={() => goToWorkspacePage("activity")}
           >
             Activity
           </span>
@@ -254,7 +258,7 @@ function Dashboard() {
             {activity.length > 0 && (
               <span
                 className="dashboard-activity-link"
-                onClick={() => navigate(`/workspace/${currentWorkspace.id}/activity`)}
+                onClick={() => goToWorkspacePage("activity")}
               >
                 View all
               </span>
@@ -300,6 +304,7 @@ function Dashboard() {
           </div>
         </div>
       )}
+
       {showCreateWorkspace && (
         <div className="dashboard-modal-overlay" onClick={() => setShowCreateWorkspace(false)}>
           <div className="dashboard-modal" onClick={(e) => e.stopPropagation()}>
