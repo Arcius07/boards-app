@@ -260,5 +260,23 @@ module.exports = (prisma) => {
     }
   });
 
+  router.get("/:id/activity", requireAuth, requireWorkspaceRole(prisma), async (req, res) => {
+    try {
+      const activity = await prisma.activityLog.findMany({
+        where: { board: { workspaceId: req.params.id } },
+        orderBy: { createdAt: "desc" },
+        take: 30,
+        include: {
+          user: { select: { id: true, name: true, avatarUrl: true } },
+          board: { select: { id: true, name: true } },
+        },
+      });
+      res.json({ activity });
+    } catch (err) {
+      console.error("Fetch activity failed:", err);
+      res.status(500).json({ error: "Failed to fetch activity" });
+    }
+  });
+
   return router;
 };

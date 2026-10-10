@@ -5,6 +5,8 @@ import api from "../api/client";
 import useAuthStore from "../store/authStore";
 import NotificationBell from "../components/NotificationBell";
 import "../style/Dashboard.css";
+import ActivityList from "../components/ActivityList";
+
 
 const BOARD_COLORS = ["#4338ca", "#15803d", "#b91c1c", "#6d28d9", "#0f766e", "#a16207"];
 
@@ -26,10 +28,20 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
+  const [activity, setActivity] = useState([]);
+
 
   useEffect(() => {
     loadWorkspaces();
   }, []);
+
+  useEffect(() => {
+    if (!currentWorkspace) return;
+    api
+      .get(`/workspaces/${currentWorkspace.id}/activity`)
+      .then((res) => setActivity(res.data.activity))
+      .catch(() => setActivity([]));
+  }, [currentWorkspace?.id]);
 
   async function loadWorkspaces() {
     setLoading(true);
@@ -159,7 +171,15 @@ function Dashboard() {
           >
             Members
           </span>
-          <span className="dashboard-nav-tab">Activity</span>
+          <span
+            className="dashboard-nav-tab"
+            style={{ cursor: "pointer" }}
+            onClick={() =>
+              currentWorkspace && navigate(`/workspace/${currentWorkspace.id}/activity`)
+            }
+          >
+            Activity
+          </span>
         </div>
 
         <div className="dashboard-search">
@@ -229,10 +249,24 @@ function Dashboard() {
         </div>
 
         <div className="dashboard-activity-card">
-          <h3 className="dashboard-activity-title">Recent Activity</h3>
-          <p className="dashboard-activity-empty">
-            Activity will show up here once your team starts working on boards.
-          </p>
+          <div className="dashboard-activity-head">
+            <h3 className="dashboard-activity-title">Recent Activity</h3>
+            {activity.length > 0 && (
+              <span
+                className="dashboard-activity-link"
+                onClick={() => navigate(`/workspace/${currentWorkspace.id}/activity`)}
+              >
+                View all
+              </span>
+            )}
+          </div>
+          {activity.length === 0 ? (
+            <p className="dashboard-activity-empty">
+              Activity will show up here once your team starts working on boards.
+            </p>
+          ) : (
+            <ActivityList items={activity.slice(0, 6)} />
+          )}
         </div>
       </main>
 

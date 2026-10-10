@@ -3,6 +3,7 @@ const { z } = require("zod");
 const requireAuth = require("../middleware/auth");
 const requireBoardAccess = require("../middleware/boardAccess");
 const { getIO } = require("../sockets/io");
+const { logActivity } = require("../services/activityService");
 
 const router = express.Router();
 
@@ -84,6 +85,16 @@ module.exports = (prisma) => {
       getIO()
         .to(`board:${req.params.id}`)
         .emit("list:created", { list: { ...list, cards: [] } });
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { name: true },
+      });
+      await logActivity(prisma, {
+        boardId: req.params.id,
+        userId: req.userId,
+        actionText: `${user?.name || "Someone"} created list "${list.name}"`,
+      });
 
       res.status(201).json({ list: { ...list, cards: [] } });
     } catch (err) {

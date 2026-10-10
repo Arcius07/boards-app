@@ -5,6 +5,7 @@ const requireAuth = require("../middleware/auth");
 const requireBoardAccess = require("../middleware/boardAccess");
 const { getIO } = require("../sockets/io");
 const { createNotification } = require("../services/notificationService");
+const { logActivity } = require("../services/activityService");
 
 const router = express.Router();
 
@@ -12,6 +13,11 @@ const cardInclude = {
   assignee: { select: { id: true, name: true, avatarUrl: true } },
   labels: { include: { label: true } },
 };
+
+async function actorName(prisma, userId) {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+  return u?.name || "Someone";
+}
 
 const updateCardSchema = z.object({
   listId: z.string().optional(),
@@ -37,7 +43,7 @@ const createAttachmentSchema = z.object({
 const attachLabelSchema = z.object({ labelId: z.string() });
 
 module.exports = (prisma) => {
-  // PATCH /cards/:id — partial update (move, edit, assign, due date)
+  // PATCH /cards/:id: partial update (move, edit, assign, due date)
   router.patch("/:id", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = updateCardSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -50,14 +56,16 @@ module.exports = (prisma) => {
     }
 
     try {
+      let destListName;
       if (fields.listId !== undefined) {
         const destList = await prisma.list.findUnique({
           where: { id: fields.listId },
-          select: { boardId: true },
+          select: { boardId: true, name: true },
         });
         if (!destList || destList.boardId !== req.boardId) {
           return res.status(400).json({ error: "Invalid destination list" });
         }
+        destListName = destList.name;
       }
 
       if (fields.assigneeId) {
@@ -74,14 +82,13 @@ module.exports = (prisma) => {
         }
       }
 
-      let previousAssigneeId;
-      if (fields.assigneeId !== undefined) {
-        const before = await prisma.card.findUnique({
-          where: { id: req.params.id },
-          select: { assigneeId: true },
-        });
-        previousAssigneeId = before?.assigneeId;
-      }
+      const before = await prisma.card.findUnique({
+        where: { id: req.params.id },
+        select: { assigneeId: true, listId: true, title: true },
+      });
+      const previousAssigneeId = before?.assigneeId;
+      const previousListId = before?.listId;
+      const previousTitle = before?.title;
 
       const data = { ...fields };
       if (fields.dueDate !== undefined) {
@@ -99,20 +106,44 @@ module.exports = (prisma) => {
         .to(`board:${req.boardId}`)
         .emit(isMove ? "card:moved" : "card:updated", { card });
 
+      const name = await actorName(prisma, req.userId);
+
+      // Notification: assigned to someone new (not yourself)
       if (
         fields.assigneeId &&
         fields.assigneeId !== previousAssigneeId &&
         fields.assigneeId !== req.userId
       ) {
-        const actor = await prisma.user.findUnique({
-          where: { id: req.userId },
-          select: { name: true },
-        });
         await createNotification(prisma, {
           userId: fields.assigneeId,
           type: "card_assigned",
-          text: `${actor.name} assigned you to "${card.title}"`,
+          text: `${name} assigned you to "${card.title}"`,
           link: `/board/${req.boardId}`,
+        });
+      }
+
+      // Activity log entries
+      if (fields.listId !== undefined && fields.listId !== previousListId) {
+        await logActivity(prisma, {
+          boardId: req.boardId,
+          userId: req.userId,
+          actionText: `${name} moved "${card.title}" to ${destListName}`,
+        });
+      }
+      if (fields.title !== undefined && fields.title !== previousTitle) {
+        await logActivity(prisma, {
+          boardId: req.boardId,
+          userId: req.userId,
+          actionText: `${name} renamed "${previousTitle}" to "${card.title}"`,
+        });
+      }
+      if (fields.assigneeId !== undefined && fields.assigneeId !== previousAssigneeId) {
+        await logActivity(prisma, {
+          boardId: req.boardId,
+          userId: req.userId,
+          actionText: card.assignee
+            ? `${name} assigned "${card.title}" to ${card.assignee.name}`
+            : `${name} unassigned "${card.title}"`,
         });
       }
 
@@ -144,6 +175,16 @@ module.exports = (prisma) => {
 
       getIO().to(`board:${req.boardId}`).emit("comment:created", { comment });
 
+      const card = await prisma.card.findUnique({
+        where: { id: req.params.id },
+        select: { title: true },
+      });
+      await logActivity(prisma, {
+        boardId: req.boardId,
+        userId: req.userId,
+        actionText: `${comment.user.name} commented on "${card.title}"`,
+      });
+
       res.status(201).json({ comment });
     } catch (err) {
       console.error("Create comment failed:", err);
@@ -174,6 +215,16 @@ module.exports = (prisma) => {
       });
 
       getIO().to(`board:${req.boardId}`).emit("attachment:created", { attachment });
+
+      const card = await prisma.card.findUnique({
+        where: { id: req.params.id },
+        select: { title: true },
+      });
+      await logActivity(prisma, {
+        boardId: req.boardId,
+        userId: req.userId,
+        actionText: `${attachment.user.name} attached ${attachment.filename} to "${card.title}"`,
+      });
 
       res.status(201).json({ attachment });
     } catch (err) {
@@ -228,7 +279,7 @@ module.exports = (prisma) => {
     }
   );
 
-  // POST /cards/:id/labels — attach an existing board label to a card
+  // POST /cards/:id/labels: attach an existing board label to a card
   router.post("/:id/labels", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     const parsed = attachLabelSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -260,7 +311,7 @@ module.exports = (prisma) => {
     }
   });
 
-  // DELETE /cards/:id/labels/:labelId — detach a label from a card
+  // DELETE /cards/:id/labels/:labelId: detach a label from a card
   router.delete("/:id/labels/:labelId", requireAuth, requireBoardAccess(prisma, "card"), async (req, res) => {
     try {
       await prisma.cardLabel.deleteMany({

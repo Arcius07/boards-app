@@ -20,6 +20,7 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import WorkspaceSettings from "./pages/WorkspaceSettings";
+import Activity from "./pages/Activity";
 
 
 
@@ -143,6 +144,10 @@ function App() {
         <Route
           path="/workspace/:workspaceId/settings"
           element={<RequireAuth><WorkspaceSettings /></RequireAuth>}
+        />
+        <Route
+          path="/workspace/:workspaceId/activity"
+          element={<RequireAuth><Activity /></RequireAuth>}
         />
       </Routes>
     </BrowserRouter>
