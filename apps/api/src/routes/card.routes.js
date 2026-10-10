@@ -4,6 +4,7 @@ const cloudinary = require("cloudinary").v2;
 const requireAuth = require("../middleware/auth");
 const requireBoardAccess = require("../middleware/boardAccess");
 const { getIO } = require("../sockets/io");
+const { createNotification } = require("../services/notificationService");
 
 const router = express.Router();
 
@@ -73,6 +74,15 @@ module.exports = (prisma) => {
         }
       }
 
+      let previousAssigneeId;
+      if (fields.assigneeId !== undefined) {
+        const before = await prisma.card.findUnique({
+          where: { id: req.params.id },
+          select: { assigneeId: true },
+        });
+        previousAssigneeId = before?.assigneeId;
+      }
+
       const data = { ...fields };
       if (fields.dueDate !== undefined) {
         data.dueDate = fields.dueDate === null ? null : new Date(fields.dueDate);
@@ -88,6 +98,23 @@ module.exports = (prisma) => {
       getIO()
         .to(`board:${req.boardId}`)
         .emit(isMove ? "card:moved" : "card:updated", { card });
+
+      if (
+        fields.assigneeId &&
+        fields.assigneeId !== previousAssigneeId &&
+        fields.assigneeId !== req.userId
+      ) {
+        const actor = await prisma.user.findUnique({
+          where: { id: req.userId },
+          select: { name: true },
+        });
+        await createNotification(prisma, {
+          userId: fields.assigneeId,
+          type: "card_assigned",
+          text: `${actor.name} assigned you to "${card.title}"`,
+          link: `/board/${req.boardId}`,
+        });
+      }
 
       res.json({ card });
     } catch (err) {

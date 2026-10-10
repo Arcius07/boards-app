@@ -1,0 +1,61 @@
+@reference "tailwindcss";
+
+.notif-wrap {
+  @apply relative;
+}
+
+.notif-badge {
+  @apply absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-[#05070f];
+}
+
+.notif-dropdown {
+  @apply absolute right-0 top-full mt-3 w-80 rounded-2xl border border-white/10 bg-[#0b0e1a] shadow-2xl shadow-black/50 z-50 overflow-hidden;
+}
+
+.notif-header {
+  @apply flex items-center justify-between px-4 py-3 border-b border-white/10;
+}
+
+.notif-title {
+  @apply text-sm font-semibold text-white;
+}
+
+.notif-mark-all {
+  @apply flex items-center gap-1.5 text-xs text-indigo-300 hover:text-indigo-200 transition-colors;
+}
+
+.notif-list {
+  @apply max-h-96 overflow-y-auto;
+}
+
+.notif-empty {
+  @apply px-4 py-10 text-center text-sm text-white/40;
+}
+
+.notif-item {
+  @apply w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/5 last:border-b-0;
+}
+
+.notif-item-unread {
+  @apply bg-indigo-500/5;
+}
+
+.notif-icon {
+  @apply w-8 h-8 rounded-full bg-indigo-500/15 border border-indigo-500/20 text-indigo-300 flex items-center justify-center shrink-0;
+}
+
+.notif-body {
+  @apply flex-1 min-w-0;
+}
+
+.notif-text {
+  @apply text-sm text-white/80 leading-snug;
+}
+
+.notif-time {
+  @apply text-[11px] text-white/35 mt-1;
+}
+
+.notif-dot {
+  @apply w-2 h-2 rounded-full bg-indigo-400 shrink-0 mt-2;
+}

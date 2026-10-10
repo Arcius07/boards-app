@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Grid3x3, Search, Bell, ChevronDown, Plus, Folder, Users, LogOut } from "lucide-react";
+import { Grid3x3, Search, Plus, Folder, Users, LogOut } from "lucide-react";
 import api from "../api/client";
 import useAuthStore from "../store/authStore";
+import NotificationBell from "../components/NotificationBell";
 import "../style/Dashboard.css";
 
 const BOARD_COLORS = ["#4338ca", "#15803d", "#b91c1c", "#6d28d9", "#0f766e", "#a16207"];
@@ -76,16 +77,17 @@ function Dashboard() {
     }
   }
 
-  function handleLogout() {
-    clearAuth();
-    navigate("/login");
-  }
-    function handleSwitchWorkspace(e) {
+  function handleSwitchWorkspace(e) {
     const ws = workspaces.find((w) => w.id === e.target.value);
     if (!ws) return;
     setCurrentWorkspace(ws);
     setError("");
     loadBoards(ws.id);
+  }
+
+  function handleLogout() {
+    clearAuth();
+    navigate("/login");
   }
 
   if (loading) {
@@ -140,9 +142,7 @@ function Dashboard() {
           <span>Search...</span>
         </div>
 
-        <button className="dashboard-icon-btn">
-          <Bell size={18} />
-        </button>
+        <NotificationBell />
 
         <div className="dashboard-avatar-menu">
           <img

@@ -2,6 +2,7 @@ const express = require("express");
 const { z } = require("zod");
 const requireAuth = require("../middleware/auth");
 const requireWorkspaceRole = require("../middleware/workspaceRole");
+const { createNotification } = require("../services/notificationService");
 
 const router = express.Router();
 
@@ -29,7 +30,6 @@ const renameWorkspaceSchema = z.object({
 const memberUserSelect = { id: true, name: true, email: true, avatarUrl: true };
 
 module.exports = (prisma) => {
-
   router.get("/", requireAuth, async (req, res) => {
     try {
       const memberships = await prisma.workspaceMember.findMany({
@@ -42,6 +42,7 @@ module.exports = (prisma) => {
       }));
       res.json({ workspaces });
     } catch (err) {
+      console.error("Fetch workspaces failed:", err);
       res.status(500).json({ error: "Failed to fetch workspaces" });
     }
   });
@@ -53,7 +54,6 @@ module.exports = (prisma) => {
     }
 
     try {
-        
       const workspace = await prisma.workspace.create({
         data: {
           name: parsed.data.name,
@@ -65,6 +65,7 @@ module.exports = (prisma) => {
       });
       res.status(201).json({ workspace });
     } catch (err) {
+      console.error("Create workspace failed:", err);
       res.status(500).json({ error: "Failed to create workspace" });
     }
   });
@@ -83,6 +84,7 @@ module.exports = (prisma) => {
       });
       res.json({ boards });
     } catch (err) {
+      console.error("Fetch boards failed:", err);
       res.status(500).json({ error: "Failed to fetch boards" });
     }
   });
@@ -117,6 +119,7 @@ module.exports = (prisma) => {
       });
       res.status(201).json({ board });
     } catch (err) {
+      console.error("Create board failed:", err);
       res.status(500).json({ error: "Failed to create board" });
     }
   });
@@ -182,6 +185,18 @@ module.exports = (prisma) => {
         data: { workspaceId: req.params.id, userId: user.id, role },
         include: { user: { select: memberUserSelect } },
       });
+
+      const [actor, workspace] = await Promise.all([
+        prisma.user.findUnique({ where: { id: req.userId }, select: { name: true } }),
+        prisma.workspace.findUnique({ where: { id: req.params.id }, select: { name: true } }),
+      ]);
+      await createNotification(prisma, {
+        userId: user.id,
+        type: "workspace_added",
+        text: `${actor.name} added you to ${workspace.name}`,
+        link: `/workspace/${req.params.id}/settings`,
+      });
+
       res.status(201).json({ member });
     } catch (err) {
       console.error("Add member failed:", err);

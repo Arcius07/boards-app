@@ -9,11 +9,13 @@ const { PrismaPg } = require("@prisma/adapter-pg");
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+const notificationRoutes = require("./routes/notification.routes");
 
 const app = express();
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
+app.use("/notifications", notificationRoutes(prisma));
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 

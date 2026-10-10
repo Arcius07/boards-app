@@ -27,6 +27,7 @@ function initSocket(httpServer, prisma) {
 
     io.on("connection", (socket) => {
         console.log(`Socket connected: ${socket.id} (user ${socket.userId})`);
+        socket.join(`user:${socket.userId}`);
 
         socket.on("join-board", async (boardId) => {
           try {
