@@ -1,0 +1,11 @@
+html[data-theme="light"] {
+  background: #fff;
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Undo the inversion for things that should keep their real colors */
+html[data-theme="light"] img,
+html[data-theme="light"] video,
+html[data-theme="light"] [style*="background"] {
+  filter: invert(1) hue-rotate(180deg);
+}

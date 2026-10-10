@@ -6,6 +6,8 @@ import useAuthStore from "../store/authStore";
 import NotificationBell from "../components/NotificationBell";
 import ActivityList from "../components/ActivityList";
 import "../style/Dashboard.css";
+import SearchBox from "../components/SearchBox";
+
 
 const BOARD_COLORS = ["#4338ca", "#15803d", "#b91c1c", "#6d28d9", "#0f766e", "#a16207"];
 
@@ -186,10 +188,7 @@ function Dashboard() {
           </span>
         </div>
 
-        <div className="dashboard-search">
-          <Search size={14} />
-          <span>Search...</span>
-        </div>
+        <SearchBox workspaceId={currentWorkspace?.id} />
 
         <NotificationBell />
 

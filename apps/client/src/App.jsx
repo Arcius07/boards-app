@@ -26,8 +26,13 @@ import { useEffect, useState } from "react";
 import api from "./api/client";
 import useAuthStore from "./store/authStore";
 
+import { getTheme, applyTheme } from "./utils/theme";
+import "./style/theme.css";
+
 import RequireAuth from "./components/RequireAuth";
 import "./App.css";
+
+applyTheme(getTheme());
 
 function DevSidebar() {
   const [open, setOpen] = useState(false);

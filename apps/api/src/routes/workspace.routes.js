@@ -278,5 +278,41 @@ module.exports = (prisma) => {
     }
   });
 
+  router.get("/:id/search", requireAuth, requireWorkspaceRole(prisma), async (req, res) => {
+    const q = String(req.query.q || "").trim();
+    if (q.length < 2) {
+      return res.json({ boards: [], cards: [] });
+    }
+
+    try {
+      const [boards, cards] = await Promise.all([
+        prisma.board.findMany({
+          where: {
+            workspaceId: req.params.id,
+            name: { contains: q, mode: "insensitive" },
+          },
+          select: { id: true, name: true },
+          take: 5,
+        }),
+        prisma.card.findMany({
+          where: {
+            title: { contains: q, mode: "insensitive" },
+            list: { board: { workspaceId: req.params.id } },
+          },
+          select: {
+            id: true,
+            title: true,
+            list: { select: { name: true, board: { select: { id: true, name: true } } } },
+          },
+          take: 8,
+        }),
+      ]);
+      res.json({ boards, cards });
+    } catch (err) {
+      console.error("Search failed:", err);
+      res.status(500).json({ error: "Search failed" });
+    }
+  });
+
   return router;
 };
