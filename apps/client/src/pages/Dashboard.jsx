@@ -24,6 +24,8 @@ function Dashboard() {
   const [newBoardName, setNewBoardName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState("");
 
   useEffect(() => {
     loadWorkspaces();
@@ -84,6 +86,22 @@ function Dashboard() {
     setError("");
     loadBoards(ws.id);
   }
+  async function handleCreateWorkspace(e) {
+    e.preventDefault();
+    if (!newWorkspaceName.trim()) return;
+    try {
+      const res = await api.post("/workspaces", { name: newWorkspaceName.trim() });
+      const ws = { ...res.data.workspace, role: "admin" };
+      setWorkspaces((prev) => [...prev, ws]);
+      setCurrentWorkspace(ws);
+      setBoards([]);
+      setNewWorkspaceName("");
+      setShowCreateWorkspace(false);
+      setError("");
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to create workspace");
+    }
+  }
 
   function handleLogout() {
     clearAuth();
@@ -120,6 +138,13 @@ function Dashboard() {
               </option>
             ))}
           </select>
+          <button
+            className="dashboard-workspace-add"
+            title="New workspace"
+            onClick={() => setShowCreateWorkspace(true)}
+          >
+            <Plus size={14} />
+          </button>
         </div>
 
         <div className="dashboard-nav-tabs">
@@ -235,6 +260,36 @@ function Dashboard() {
                 </button>
                 <button type="submit" disabled={creating} className="dashboard-modal-submit">
                   {creating ? "Creating..." : "Create Board"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {showCreateWorkspace && (
+        <div className="dashboard-modal-overlay" onClick={() => setShowCreateWorkspace(false)}>
+          <div className="dashboard-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="dashboard-modal-title">Create a new workspace</h2>
+            <form onSubmit={handleCreateWorkspace} className="dashboard-modal-form">
+              <input
+                type="text"
+                placeholder="Workspace name"
+                value={newWorkspaceName}
+                onChange={(e) => setNewWorkspaceName(e.target.value)}
+                className="dashboard-modal-input"
+                autoFocus
+                required
+              />
+              <div className="dashboard-modal-actions">
+                <button
+                  type="button"
+                  className="dashboard-modal-cancel"
+                  onClick={() => setShowCreateWorkspace(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="dashboard-modal-submit">
+                  Create Workspace
                 </button>
               </div>
             </form>

@@ -179,3 +179,7 @@
 .dashboard-workspace-select option {
   @apply bg-[#0b0e1a] text-white;
 }
+
+.dashboard-workspace-add {
+  @apply ml-1 p-1 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition-colors;
+}
