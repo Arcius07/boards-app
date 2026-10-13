@@ -9,13 +9,21 @@ const { PrismaPg } = require("@prisma/adapter-pg");
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
-const notificationRoutes = require("./routes/notification.routes");
 
 const app = express();
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+
+// Behind Vercel -> Render's proxies. Without this, express-rate-limit throws and
+// every request would look like it comes from the same IP.
+app.set("trust proxy", 2);
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(cookieParser());
-app.use("/notifications", notificationRoutes(prisma));
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
@@ -46,6 +54,9 @@ app.use("/cards", cardRoutes(prisma));
 const userRoutes = require("./routes/user.routes");
 app.use("/users", userRoutes(prisma));
 
+const notificationRoutes = require("./routes/notification.routes");
+app.use("/notifications", notificationRoutes(prisma));
+
 const uploadRoutes = require("./routes/upload.routes");
 app.use("/uploads", uploadRoutes);
 
@@ -53,4 +64,4 @@ const httpServer = http.createServer(app);
 initSocket(httpServer, prisma);
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+httpServer.listen(PORT, () => console.log(`API running on port ${PORT}`));

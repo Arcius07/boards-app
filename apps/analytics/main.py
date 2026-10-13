@@ -1,3 +1,5 @@
+import os
+
 from datetime import date, datetime, timedelta
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -13,7 +15,7 @@ app = FastAPI(title="Boards Analytics")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[os.environ.get("CLIENT_URL", "http://localhost:5173")],
     allow_methods=["GET"],
     allow_headers=["Authorization"],
 )

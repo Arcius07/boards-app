@@ -28,7 +28,6 @@ function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0);
   const wrapRef = useRef(null);
 
-  // 1. Initial load
   useEffect(() => {
     api
       .get("/notifications")
@@ -39,10 +38,11 @@ function NotificationBell() {
       .catch(() => {});
   }, []);
 
-  // 2. Live delivery (the server puts every socket in its personal room automatically)
   useEffect(() => {
     const accessToken = useAuthStore.getState().accessToken;
-    const socket = io("http://localhost:5000", { auth: { token: accessToken } });
+    const socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", {
+      auth: { token: accessToken },
+    });
 
     socket.on("notification:new", ({ notification }) => {
       setNotifications((prev) => {
@@ -57,7 +57,6 @@ function NotificationBell() {
     };
   }, []);
 
-  // 3. Close when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (wrapRef.current && !wrapRef.current.contains(e.target)) {
@@ -75,9 +74,7 @@ function NotificationBell() {
       setUnreadCount((c) => Math.max(0, c - 1));
       try {
         await api.patch(`/notifications/${n.id}/read`);
-      } catch (err) {
-        // Non-critical: it will simply show as unread again on next load.
-      }
+      } catch (err) {}
     }
     if (n.link) navigate(n.link);
   }

@@ -14,7 +14,13 @@ def _async_url(url: str) -> str:
     return urlunsplit(("postgresql+asyncpg", parts.netloc, parts.path, "", ""))
 
 
-engine = create_async_engine(_async_url(os.environ["DATABASE_URL"]))
+_parts = urlsplit(os.environ["DATABASE_URL"])
+_local = _parts.hostname in ("localhost", "127.0.0.1")
+
+engine = create_async_engine(
+    _async_url(os.environ["DATABASE_URL"]),
+    connect_args={} if _local else {"ssl": True},  # Neon requires SSL
+)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 

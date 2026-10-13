@@ -16,7 +16,7 @@ import api from "../api/client";
 import useAuthStore from "../store/authStore";
 import "../style/Analytics.css";
 
-const ANALYTICS_URL = "http://localhost:8000";
+const ANALYTICS_URL = import.meta.env.VITE_ANALYTICS_URL || "http://localhost:8000";
 
 const AXIS = { stroke: "rgba(255,255,255,0.35)", fontSize: 12 };
 const TOOLTIP = {

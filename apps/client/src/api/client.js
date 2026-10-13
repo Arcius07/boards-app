@@ -1,8 +1,11 @@
 import axios from "axios";
 import useAuthStore from "../store/authStore";
 
+// Dev: talk to Express directly. Production: "/api", which Vercel proxies to Render.
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const api = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: API_URL,
   withCredentials: true,
 });
 
@@ -26,11 +29,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(
-          "http://localhost:5000/auth/refresh",
-          {},
-          { withCredentials: true }
-        );
+        const res = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
         const newToken = res.data.accessToken;
         useAuthStore.getState().setAuth(useAuthStore.getState().user, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
